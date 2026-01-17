@@ -82,17 +82,17 @@ export default function PoliceDashboard() {
   }, [streams]);
 
   return (
-    <div className="min-h-screen bg-primary text-primary-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-primary-foreground/10 px-6 py-4">
+      <header className="border-b border-border px-6 py-4 bg-card">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-foreground/10">
-              <Shield className="h-6 w-6" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+              <Shield className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">SafeStream Command</h1>
-              <p className="text-sm text-primary-foreground/60">
+              <h1 className="text-xl font-bold text-card-foreground">SafeStream Command</h1>
+              <p className="text-sm text-muted-foreground">
                 Emergency Response Dashboard
               </p>
             </div>
@@ -100,19 +100,19 @@ export default function PoliceDashboard() {
 
           <div className="flex items-center gap-4">
             {/* Active streams count */}
-            <Badge variant="outline" className="border-emergency/50 bg-emergency/10 text-emergency gap-1.5">
+            <Badge className="bg-emergency/10 text-emergency border border-emergency/30 gap-1.5">
               <Radio className="h-3 w-3" />
               {streams.length} Active Stream{streams.length !== 1 ? "s" : ""}
             </Badge>
 
             {/* Connection status */}
             {isConnected ? (
-              <Badge variant="outline" className="border-success/50 bg-success/10 text-success gap-1.5">
+              <Badge className="bg-success/10 text-success border border-success/30 gap-1.5">
                 <Wifi className="h-3 w-3" />
                 Connected
               </Badge>
             ) : (
-              <Badge variant="outline" className="border-destructive/50 bg-destructive/10 text-destructive gap-1.5">
+              <Badge className="bg-destructive/10 text-destructive border border-destructive/30 gap-1.5">
                 <WifiOff className="h-3 w-3" />
                 Disconnected
               </Badge>
@@ -138,14 +138,14 @@ export default function PoliceDashboard() {
           /* No active streams state */
           <div className="flex min-h-[60vh] flex-col items-center justify-center">
             <div className="text-center animate-fade-in">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-foreground/5">
-                <Radio className="h-10 w-10 text-primary-foreground/30" />
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+                <Radio className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h2 className="text-2xl font-bold">No Active Streams</h2>
-              <p className="mt-2 text-primary-foreground/60">
+              <h2 className="text-2xl font-bold text-foreground">No Active Streams</h2>
+              <p className="mt-2 text-muted-foreground">
                 Waiting for incoming emergency streams...
               </p>
-              <div className="mt-6 flex items-center justify-center gap-2 text-sm text-primary-foreground/40">
+              <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-success" />
                 <span>System ready and monitoring</span>
               </div>
