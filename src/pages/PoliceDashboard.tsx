@@ -1,78 +1,85 @@
 import { useState, useEffect } from "react";
-import {
-  Shield,
-  MapPin,
-  Clock,
-  FileText,
-  Radio,
-  AlertCircle,
-  User,
-  Wifi,
-  WifiOff,
-} from "lucide-react";
-import { LiveIndicator } from "@/components/LiveIndicator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield, Radio, Wifi, WifiOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { StreamCard, type StreamData } from "@/components/StreamCard";
+import { ExpandedStreamView } from "@/components/ExpandedStreamView";
 
-// Mock stream data for demo purposes
-interface StreamData {
-  id: string;
-  isActive: boolean;
-  startedAt: Date;
-  latitude: number;
-  longitude: number;
-  notes: string;
-}
-
-// Simulated active stream for demo
-const mockActiveStream: StreamData = {
-  id: "stream-001",
-  isActive: true,
-  startedAt: new Date(),
-  latitude: 49.2827,
-  longitude: -123.1207,
-  notes: "Incident near the library entrance, hearing loud noises from the east wing",
-};
+// Mock streams for demo - simulates multiple active streams
+const mockStreams: StreamData[] = [
+  {
+    id: "stream-001",
+    isActive: true,
+    startedAt: new Date(Date.now() - 45000),
+    latitude: 49.2827,
+    longitude: -123.1207,
+    notes: "Incident near library entrance, hearing loud noises from east wing",
+  },
+  {
+    id: "stream-002",
+    isActive: true,
+    startedAt: new Date(Date.now() - 120000),
+    latitude: 49.2611,
+    longitude: -123.2531,
+    notes: "Suspicious activity in parking lot B",
+  },
+  {
+    id: "stream-003",
+    isActive: true,
+    startedAt: new Date(Date.now() - 30000),
+    latitude: 49.2768,
+    longitude: -123.1120,
+    notes: "",
+  },
+  {
+    id: "stream-004",
+    isActive: true,
+    startedAt: new Date(Date.now() - 200000),
+    latitude: 49.2849,
+    longitude: -123.1194,
+    notes: "Medical emergency in cafeteria, person unresponsive",
+  },
+];
 
 export default function PoliceDashboard() {
-  const [activeStream, setActiveStream] = useState<StreamData | null>(null);
+  const [streams, setStreams] = useState<StreamData[]>([]);
+  const [selectedStream, setSelectedStream] = useState<StreamData | null>(null);
   const [isConnected, setIsConnected] = useState(true);
-  const [duration, setDuration] = useState(0);
+  const [durations, setDurations] = useState<Record<string, number>>({});
 
-  // Simulate receiving a stream after a few seconds (for demo)
+  // Simulate streams appearing over time
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setActiveStream(mockActiveStream);
-    }, 2000);
-    return () => clearTimeout(timer);
+    const timers: NodeJS.Timeout[] = [];
+    
+    mockStreams.forEach((stream, index) => {
+      const timer = setTimeout(() => {
+        setStreams(prev => [...prev, stream]);
+        setDurations(prev => ({
+          ...prev,
+          [stream.id]: Math.floor((Date.now() - stream.startedAt.getTime()) / 1000)
+        }));
+      }, index * 1500);
+      timers.push(timer);
+    });
+
+    return () => timers.forEach(t => clearTimeout(t));
   }, []);
 
-  // Duration counter
+  // Duration counter for all streams
   useEffect(() => {
-    if (!activeStream) return;
+    if (streams.length === 0) return;
 
     const interval = setInterval(() => {
-      setDuration((d) => d + 1);
+      setDurations(prev => {
+        const updated = { ...prev };
+        streams.forEach(stream => {
+          updated[stream.id] = (updated[stream.id] || 0) + 1;
+        });
+        return updated;
+      });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [activeStream]);
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const formatTimestamp = (date: Date) => {
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    });
-  };
+  }, [streams]);
 
   return (
     <div className="min-h-screen bg-primary text-primary-foreground">
@@ -91,8 +98,14 @@ export default function PoliceDashboard() {
             </div>
           </div>
 
-          {/* Connection status */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            {/* Active streams count */}
+            <Badge variant="outline" className="border-emergency/50 bg-emergency/10 text-emergency gap-1.5">
+              <Radio className="h-3 w-3" />
+              {streams.length} Active Stream{streams.length !== 1 ? "s" : ""}
+            </Badge>
+
+            {/* Connection status */}
             {isConnected ? (
               <Badge variant="outline" className="border-success/50 bg-success/10 text-success gap-1.5">
                 <Wifi className="h-3 w-3" />
@@ -110,152 +123,19 @@ export default function PoliceDashboard() {
 
       {/* Main content */}
       <main className="p-6">
-        {activeStream ? (
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Video feed - takes up 2 columns */}
-            <div className="lg:col-span-2">
-              <Card className="overflow-hidden border-0 bg-foreground/5">
-                <CardHeader className="border-b border-primary-foreground/10 pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <LiveIndicator />
-                      <CardTitle className="text-lg font-semibold">
-                        Active Stream
-                      </CardTitle>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-full bg-foreground/10 px-3 py-1.5">
-                      <Clock className="h-4 w-4" />
-                      <span className="font-mono text-sm font-bold">
-                        {formatDuration(duration)}
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {/* Video placeholder - in real app, this would be the WebRTC video element */}
-                  <div className="relative aspect-video bg-foreground/10">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emergency/20 animate-emergency-pulse">
-                          <Radio className="h-8 w-8 text-emergency" />
-                        </div>
-                        <p className="text-sm text-primary-foreground/60">
-                          Receiving live stream...
-                        </p>
-                        <p className="mt-1 text-xs text-primary-foreground/40">
-                          Stream ID: {activeStream.id}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Overlay elements */}
-                    <div className="absolute left-4 top-4">
-                      <Badge className="bg-emergency text-emergency-foreground gap-1.5 px-3 py-1">
-                        <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emergency-foreground opacity-75" />
-                          <span className="relative inline-flex h-2 w-2 rounded-full bg-emergency-foreground" />
-                        </span>
-                        LIVE
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Metadata panel */}
-            <div className="space-y-4">
-              {/* Stream info card */}
-              <Card className="border-0 bg-foreground/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Radio className="h-4 w-4" />
-                    Stream Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Stream ID */}
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-primary-foreground/50">
-                      Stream ID
-                    </p>
-                    <p className="font-mono text-sm">{activeStream.id}</p>
-                  </div>
-
-                  {/* Started at */}
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-primary-foreground/50">
-                      Started At
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-primary-foreground/60" />
-                      <p className="text-sm">
-                        {formatTimestamp(activeStream.startedAt)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Duration */}
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-primary-foreground/50">
-                      Duration
-                    </p>
-                    <p className="font-mono text-lg font-bold text-emergency">
-                      {formatDuration(duration)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Location card */}
-              <Card className="border-0 bg-foreground/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <MapPin className="h-4 w-4" />
-                    Location
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="rounded-lg bg-foreground/5 p-3">
-                    <p className="font-mono text-sm">
-                      {activeStream.latitude.toFixed(6)},{" "}
-                      {activeStream.longitude.toFixed(6)}
-                    </p>
-                  </div>
-                  {/* Map placeholder */}
-                  <div className="aspect-square rounded-lg bg-foreground/10 flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="mx-auto h-8 w-8 text-primary-foreground/30" />
-                      <p className="mt-2 text-xs text-primary-foreground/40">
-                        Map view
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Notes card */}
-              {activeStream.notes && (
-                <Card className="border-0 bg-foreground/5">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <FileText className="h-4 w-4" />
-                      Caller Notes
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="rounded-lg bg-warning/10 border border-warning/20 p-3">
-                      <p className="text-sm leading-relaxed">
-                        {activeStream.notes}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+        {streams.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {streams.map(stream => (
+              <StreamCard
+                key={stream.id}
+                stream={stream}
+                duration={durations[stream.id] || 0}
+                onClick={() => setSelectedStream(stream)}
+              />
+            ))}
           </div>
         ) : (
-          /* No active stream state */
+          /* No active streams state */
           <div className="flex min-h-[60vh] flex-col items-center justify-center">
             <div className="text-center animate-fade-in">
               <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-foreground/5">
@@ -273,6 +153,15 @@ export default function PoliceDashboard() {
           </div>
         )}
       </main>
+
+      {/* Expanded stream modal */}
+      {selectedStream && (
+        <ExpandedStreamView
+          stream={selectedStream}
+          duration={durations[selectedStream.id] || 0}
+          onClose={() => setSelectedStream(null)}
+        />
+      )}
     </div>
   );
 }
