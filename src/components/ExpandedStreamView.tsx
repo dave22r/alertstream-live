@@ -1,9 +1,11 @@
-import { X, Clock, MapPin, FileText, Radio } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, Clock, MapPin, FileText, Radio, Wifi, WifiOff } from "lucide-react";
 import { LiveIndicator } from "@/components/LiveIndicator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { StreamData } from "@/components/StreamCard";
+import type { StreamData } from "@/components/StreamCardLive";
+import { useViewer } from "@/hooks/useViewer";
 
 interface ExpandedStreamViewProps {
   stream: StreamData;
@@ -12,6 +14,37 @@ interface ExpandedStreamViewProps {
 }
 
 export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStreamViewProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "failed">("connecting");
+  
+  const {
+    isReceiving,
+    remoteStream,
+    error,
+    connect,
+    disconnect,
+  } = useViewer({
+    streamId: stream.id,
+    onStreamReady: () => setConnectionStatus("connected"),
+    onStreamEnded: () => setConnectionStatus("failed"),
+  });
+
+  useEffect(() => {
+    if (stream.id) {
+      connect();
+    }
+    return () => {
+      disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stream.id]);
+
+  useEffect(() => {
+    if (videoRef.current && remoteStream) {
+      videoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -64,22 +97,33 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                   </div>
                 </CardHeader>
                 <CardContent className="p-0 h-[calc(100%-60px)]">
-                  <div className="relative h-full min-h-[400px] bg-muted">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emergency/20 animate-emergency-pulse">
-                          <Radio className="h-8 w-8 text-emergency" />
+                  <div className="relative h-full min-h-[400px] bg-muted bg-black">
+                    {/* Real Video Feed via WebRTC */}
+                    {remoteStream ? (
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      /* Placeholder / Loading State */
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emergency/20 animate-emergency-pulse">
+                            <Radio className="h-8 w-8 text-emergency" />
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {error ? "Failed to connect" : "Connecting to live stream..."}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Stream ID: {stream.id.substring(0, 8)}...
+                          </p>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          Receiving live stream...
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Stream ID: {stream.id}
-                        </p>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="absolute left-4 top-4">
+                    <div className="absolute left-4 top-4 flex gap-2">
                       <Badge className="bg-emergency text-emergency-foreground gap-1.5 px-3 py-1">
                         <span className="relative flex h-2 w-2">
                           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emergency-foreground opacity-75" />
@@ -87,6 +131,17 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                         </span>
                         LIVE
                       </Badge>
+                      {isReceiving ? (
+                        <Badge className="bg-success/20 text-success border border-success/30 gap-1">
+                          <Wifi className="h-3 w-3" />
+                          Connected
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-warning/20 text-warning border border-warning/30 gap-1">
+                          <WifiOff className="h-3 w-3" />
+                          {error ? "Error" : "Connecting..."}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </CardContent>

@@ -33,15 +33,15 @@ export function StreamerConfirmModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md animate-scale-in">
+      <DialogContent className="sm:max-w-md bg-zinc-900 border-zinc-700">
         <DialogHeader>
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emergency/10">
-            <AlertTriangle className="h-7 w-7 text-emergency" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-600/10 border border-red-500/20">
+            <AlertTriangle className="h-7 w-7 text-red-500" />
           </div>
-          <DialogTitle className="text-center text-xl">
+          <DialogTitle className="text-center text-xl text-white">
             Start Emergency Stream
           </DialogTitle>
-          <DialogDescription className="text-center text-base">
+          <DialogDescription className="text-center text-base text-zinc-400">
             Your camera, microphone, and location will be shared with emergency
             responders. Use only in genuine emergencies.
           </DialogDescription>
@@ -50,15 +50,15 @@ export function StreamerConfirmModal({
         <div className="space-y-4 py-4">
           {/* Permissions info */}
           <div className="flex flex-wrap justify-center gap-3">
-            <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
+            <div className="flex items-center gap-1.5 rounded-full bg-zinc-800 border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300">
               <Video className="h-3.5 w-3.5" />
               Camera
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
+            <div className="flex items-center gap-1.5 rounded-full bg-zinc-800 border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300">
               <Mic className="h-3.5 w-3.5" />
               Microphone
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
+            <div className="flex items-center gap-1.5 rounded-full bg-zinc-800 border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300">
               <MapPin className="h-3.5 w-3.5" />
               Location
             </div>
@@ -66,7 +66,7 @@ export function StreamerConfirmModal({
 
           {/* Optional notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-sm font-medium">
+            <Label htmlFor="notes" className="text-sm font-medium text-zinc-300">
               Additional context (optional)
             </Label>
             <Textarea
@@ -74,18 +74,17 @@ export function StreamerConfirmModal({
               placeholder="e.g., Room 304, north stairwell..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="min-h-[80px] resize-none"
+              className="min-h-[80px] resize-none bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
             />
           </div>
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           <Button
-            variant="emergency"
             size="lg"
             onClick={handleConfirm}
             disabled={isLoading}
-            className="w-full animate-emergency-pulse"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
           >
             {isLoading ? "Starting..." : "Start Streaming"}
           </Button>
@@ -93,7 +92,7 @@ export function StreamerConfirmModal({
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
-            className="w-full"
+            className="w-full text-zinc-400 hover:text-white hover:bg-zinc-800"
           >
             Cancel
           </Button>
