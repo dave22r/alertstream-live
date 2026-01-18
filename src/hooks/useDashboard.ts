@@ -22,12 +22,23 @@ export interface PastStreamInfo {
   video_url: string;
 }
 
+export interface AlertInfo {
+  type: "alert";
+  stream_id: string;
+  latitude: number;
+  longitude: number;
+  message: string;
+  timestamp: string;
+}
+
 interface UseDashboardReturn {
   streams: StreamInfo[];
   pastStreams: PastStreamInfo[];
   isConnected: boolean;
   error: string | null;
   deletePastStream: (streamId: string) => Promise<void>;
+  lastAlert: AlertInfo | null;
+  clearAlert: () => void;
 }
 
 export function useDashboard(): UseDashboardReturn {
@@ -35,8 +46,9 @@ export function useDashboard(): UseDashboardReturn {
   const [pastStreams, setPastStreams] = useState<PastStreamInfo[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastAlert, setLastAlert] = useState<AlertInfo | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -56,6 +68,9 @@ export function useDashboard(): UseDashboardReturn {
         if (message.type === "stream_list") {
           setStreams(message.streams || []);
           setPastStreams(message.past_streams || []);
+        } else if (message.type === "alert") {
+          console.log("[Dashboard] Received Alert:", message);
+          setLastAlert(message as AlertInfo);
         }
       } catch (err) {
         console.error("[Dashboard] Failed to parse message:", err);
@@ -101,11 +116,17 @@ export function useDashboard(): UseDashboardReturn {
     };
   }, [connect]);
 
+  const clearAlert = useCallback(() => {
+    setLastAlert(null);
+  }, []);
+
   return {
     streams,
     pastStreams,
     isConnected,
     error,
     deletePastStream,
+    lastAlert,
+    clearAlert,
   };
 }

@@ -16,6 +16,20 @@ import asyncio
 import os
 import uuid
 from pathlib import Path
+from dotenv import load_dotenv
+import google.generativeai as genai
+
+# Load environment variables
+load_dotenv()
+
+# Configure Gemini
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    gemini_model = genai.GenerativeModel("gemini-2.5-flash-lite")
+else:
+    print("WARNING: GEMINI_API_KEY not set. AI analysis will be disabled.")
+    gemini_model = None
 
 app = FastAPI(title="SafeStream Signaling Server")
 
@@ -153,6 +167,61 @@ async def upload_recording(
     await broadcast_stream_list()
     
     return {"success": True, "stream": asdict(past_stream)}
+
+
+@app.post("/analyze-frame")
+async def analyze_frame(
+    stream_id: str = Form(...),
+    latitude: float = Form(0.0),
+    longitude: float = Form(0.0),
+    file: UploadFile = File(...)
+):
+    """AI Sentry: Analyze a video frame for threats using Gemini."""
+    if not gemini_model:
+        return {"threat_detected": False, "error": "Gemini not configured"}
+    
+    try:
+        content = await file.read()
+        
+        # Prompt to detect phones/people for testing
+        prompt = "Look at this image. Is there a firearm, weapon, toy gun, mobile phone, tablet, or human person visible? Answer exactly YES or NO."
+        
+        # Send to Gemini
+        response = gemini_model.generate_content([
+            {"mime_type": file.content_type or "image/jpeg", "data": content},
+            prompt
+        ])
+        
+        result_text = response.text.strip().upper()
+        threat_detected = "YES" in result_text
+        
+        print(f"[AI Sentry] Stream {stream_id}: Gemini response = '{result_text}', Threat = {threat_detected}")
+        
+        if threat_detected:
+            # Broadcast alert to all dashboards
+            alert_message = json.dumps({
+                "type": "alert",
+                "stream_id": stream_id,
+                "latitude": latitude,
+                "longitude": longitude,
+                "message": "THREAT DETECTED",
+                "timestamp": datetime.now().isoformat()
+            })
+            
+            disconnected = []
+            for ws in dashboard_connections:
+                try:
+                    await ws.send_text(alert_message)
+                except:
+                    disconnected.append(ws)
+            for ws in disconnected:
+                dashboard_connections.remove(ws)
+        
+        return {"threat_detected": threat_detected}
+    
+    except Exception as e:
+        print(f"[AI Sentry] Error: {e}")
+        return {"threat_detected": False, "error": str(e)}
 
 
 @app.delete("/past-streams/{stream_id}")

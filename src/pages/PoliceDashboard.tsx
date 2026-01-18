@@ -39,6 +39,7 @@ import { StreamCardLive, type StreamData } from "@/components/StreamCardLive";
 import { ExpandedStreamView } from "@/components/ExpandedStreamView";
 import { PastStreamViewer } from "@/components/PastStreamViewer";
 import { useDashboard, type StreamInfo, type PastStreamInfo } from "@/hooks/useDashboard";
+import { useToast } from "@/hooks/use-toast";
 
 // Convert server stream info to StreamData format
 function serverToStreamData(info: StreamInfo): StreamData {
@@ -65,9 +66,9 @@ function getDistanceKm(
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -85,7 +86,29 @@ export default function PoliceDashboard() {
   const [filterRadius, setFilterRadius] = useState(10); // km
 
   // Connect to signaling server
-  const { streams: serverStreams, pastStreams, isConnected, deletePastStream } = useDashboard();
+  const {
+    streams: serverStreams,
+    pastStreams,
+    isConnected,
+    deletePastStream,
+    lastAlert,
+    clearAlert
+  } = useDashboard();
+
+  // Toast for AI Sentry alerts (persistent - must click to dismiss)
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (lastAlert) {
+      toast({
+        variant: "destructive",
+        title: `🚨 ${lastAlert.message}`,
+        description: `Stream: ${lastAlert.stream_id.substring(0, 8)} | Location: ${lastAlert.latitude.toFixed(4)}, ${lastAlert.longitude.toFixed(4)}`,
+        duration: Infinity, // Never auto-dismiss
+      });
+      clearAlert();
+    }
+  }, [lastAlert, toast, clearAlert]);
 
   // Convert and filter streams
   const allStreams = useMemo(() => {
@@ -204,9 +227,8 @@ export default function PoliceDashboard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`h-8 gap-1.5 text-xs border-zinc-700 bg-zinc-900 hover:bg-zinc-800 ${
-                    filterEnabled ? "border-blue-500 text-blue-400" : "text-zinc-400"
-                  }`}
+                  className={`h-8 gap-1.5 text-xs border-zinc-700 bg-zinc-900 hover:bg-zinc-800 ${filterEnabled ? "border-blue-500 text-blue-400" : "text-zinc-400"
+                    }`}
                 >
                   <MapPin className="h-3.5 w-3.5" />
                   {filterEnabled ? `${filterRadius}km radius` : "Location Filter"}
@@ -291,9 +313,8 @@ export default function PoliceDashboard() {
             {/* Stream Count */}
             <Badge
               variant="outline"
-              className={`h-8 px-2.5 gap-1.5 text-xs font-mono border-zinc-700 ${
-                allStreams.length > 0 ? "text-red-400 border-red-500/30" : "text-zinc-500"
-              }`}
+              className={`h-8 px-2.5 gap-1.5 text-xs font-mono border-zinc-700 ${allStreams.length > 0 ? "text-red-400 border-red-500/30" : "text-zinc-500"
+                }`}
             >
               <Video className="h-3 w-3" />
               {allStreams.length}
@@ -340,7 +361,7 @@ export default function PoliceDashboard() {
             <div>
               <h2 className="text-lg font-semibold text-white">Live Streams</h2>
               <p className="text-xs text-zinc-500">
-                {allStreams.length > 0 
+                {allStreams.length > 0
                   ? `${allStreams.length} active stream${allStreams.length !== 1 ? 's' : ''}`
                   : 'No active streams'}
               </p>
@@ -402,7 +423,7 @@ export default function PoliceDashboard() {
             <div>
               <h2 className="text-lg font-semibold text-white">Past Recordings</h2>
               <p className="text-xs text-zinc-500">
-                {pastStreams.length > 0 
+                {pastStreams.length > 0
                   ? `${pastStreams.length} recorded stream${pastStreams.length !== 1 ? 's' : ''}`
                   : 'No recordings yet'}
               </p>

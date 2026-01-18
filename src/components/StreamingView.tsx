@@ -79,8 +79,68 @@ export function StreamingView({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // ========== AI SENTRY: Frame Analysis ==========
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (!isBroadcasting || !videoRef.current || !stream) return;
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let isCancelled = false;
+
+    const analyzeFrame = async () => {
+      if (isCancelled || !videoRef.current || !canvasRef.current) return;
+
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(async (blob) => {
+        if (!blob || isCancelled) return;
+
+        const formData = new FormData();
+        formData.append("stream_id", streamId);
+        formData.append("latitude", String(location?.latitude || 0));
+        formData.append("longitude", String(location?.longitude || 0));
+        formData.append("file", blob, "frame.jpg");
+
+        try {
+          const { signalingConfig } = await import("@/lib/signalingConfig");
+          await fetch(signalingConfig.analyzeFrameUrl, {
+            method: "POST",
+            body: formData,
+          });
+          console.log("[AI Sentry] Frame sent for analysis");
+        } catch (err) {
+          console.error("[AI Sentry] Failed to send frame:", err);
+        }
+
+        if (!isCancelled) {
+          // One-time capture only - no repeat
+          console.log("[AI Sentry] Frame analysis complete (one-time)");
+        }
+      }, "image/jpeg", 0.7);
+    };
+
+    // Start after 15 seconds
+    timeoutId = setTimeout(analyzeFrame, 15000);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [isBroadcasting, stream, streamId, location]);
+  // ========== END AI SENTRY ==========
+
   return (
     <div className="relative flex h-screen w-full flex-col bg-black">
+      {/* Hidden canvas for frame capture */}
+      <canvas ref={canvasRef} className="hidden" />
       {/* Video feed - full screen */}
       <div className="relative flex-1">
         <video
