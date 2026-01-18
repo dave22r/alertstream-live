@@ -550,9 +550,18 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                     >
                       <div className="aspect-video rounded-lg overflow-hidden border border-zinc-700 relative group">
                         <img
-                          src={`https://static-maps.yandex.ru/1.x/?ll=${stream.longitude},${stream.latitude}&z=15&l=map&size=400,300&pt=${stream.longitude},${stream.latitude},pm2rdl`}
+                          src={`https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s-l+f00(${stream.longitude},${stream.latitude})/${stream.longitude},${stream.latitude},15,0/400x300@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw`}
                           alt="Location map"
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback to OpenStreetMap tiles if Mapbox fails
+                            const target = e.target as HTMLImageElement;
+                            const zoom = 15;
+                            const scale = Math.pow(2, zoom);
+                            const x = Math.floor((stream.longitude + 180) / 360 * scale);
+                            const y = Math.floor((1 - Math.log(Math.tan(stream.latitude * Math.PI / 180) + 1 / Math.cos(stream.latitude * Math.PI / 180)) / Math.PI) / 2 * scale);
+                            target.src = `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+                          }}
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                           <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
