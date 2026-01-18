@@ -1,18 +1,22 @@
 // Auto-detect signaling server based on environment
 const getSignalingServer = () => {
   if (import.meta.env.VITE_SIGNALING_SERVER) {
+    console.log('[Config] Using VITE_SIGNALING_SERVER:', import.meta.env.VITE_SIGNALING_SERVER);
     return import.meta.env.VITE_SIGNALING_SERVER;
   }
   
   // In production, use the Render backend
   if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
+    console.log('[Config] Production mode - using Render backend');
     return "wss://alertstream-live-l6vr.onrender.com";
   }
   
+  console.log('[Config] Local mode - using localhost');
   return "ws://localhost:10000";
 };
 
 const SIGNALING_SERVER = getSignalingServer();
+console.log('[Config] SIGNALING_SERVER:', SIGNALING_SERVER);
 const HTTP_BASE = SIGNALING_SERVER.replace("ws://", "http://").replace("wss://", "https://");
 
 export const signalingConfig = {
