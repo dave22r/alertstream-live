@@ -94,22 +94,45 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
     }
   }, [remoteStream, isLiveMode]);
 
-  // Handle playback video time updates
+  // Handle playback video time updates with high-frequency polling for smooth progress bar
   useEffect(() => {
     const video = playbackVideoRef.current;
-    if (!video) return;
+    if (!video || !playbackUrl) return;
 
-    const handleTimeUpdate = () => setPlaybackTime(video.currentTime);
-    const handleDurationChange = () => setPlaybackDuration(video.duration || 0);
+    let animationFrameId: number;
+    let isUpdating = true;
+
+    const updateTime = () => {
+      if (!isUpdating || !video) return;
+      
+      setPlaybackTime(video.currentTime);
+      
+      // Update duration if it becomes available (WebM metadata can be delayed)
+      if (video.duration && !isNaN(video.duration) && video.duration !== Infinity) {
+        setPlaybackDuration(video.duration);
+      }
+      
+      animationFrameId = requestAnimationFrame(updateTime);
+    };
+
+    const handleLoadedMetadata = () => {
+      if (video.duration && !isNaN(video.duration) && video.duration !== Infinity) {
+        setPlaybackDuration(video.duration);
+      }
+    };
+
     const handleEnded = () => goLive();
 
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("durationchange", handleDurationChange);
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.addEventListener("ended", handleEnded);
+    
+    // Start high-frequency updates
+    animationFrameId = requestAnimationFrame(updateTime);
 
     return () => {
-      video.removeEventListener("timeupdate", handleTimeUpdate);
-      video.removeEventListener("durationchange", handleDurationChange);
+      isUpdating = false;
+      cancelAnimationFrame(animationFrameId);
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("ended", handleEnded);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,12 +141,16 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
   const createPlaybackBlob = useCallback(() => {
     if (recordedChunksRef.current.length === 0) return null;
     const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-    return URL.createObjectURL(blob);
+    // Store the estimated duration based on chunk count (each chunk is ~1 second)
+    const estimatedDuration = recordedChunksRef.current.length;
+    return { url: URL.createObjectURL(blob), estimatedDuration };
   }, []);
 
   const goLive = useCallback(() => {
     setIsLiveMode(true);
     setIsPaused(false);
+    setPlaybackTime(0);
+    setPlaybackDuration(0);
     if (playbackUrl) {
       URL.revokeObjectURL(playbackUrl);
       setPlaybackUrl(null);
@@ -137,9 +164,10 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
   const pauseStream = useCallback(() => {
     if (isLiveMode) {
       // Switch to playback mode
-      const url = createPlaybackBlob();
-      if (url) {
-        setPlaybackUrl(url);
+      const result = createPlaybackBlob();
+      if (result) {
+        setPlaybackUrl(result.url);
+        setPlaybackDuration(result.estimatedDuration); // Use estimated duration immediately
         setIsLiveMode(false);
         setIsPaused(true);
         // Seek to end of recording
@@ -169,14 +197,18 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
   const skipBack = useCallback((seconds: number) => {
     if (isLiveMode) {
       // Need to switch to playback mode first
-      const url = createPlaybackBlob();
-      if (url) {
-        setPlaybackUrl(url);
+      const result = createPlaybackBlob();
+      if (result) {
+        setPlaybackUrl(result.url);
+        setPlaybackDuration(result.estimatedDuration);
         setIsLiveMode(false);
         setIsPaused(false);
         setTimeout(() => {
           if (playbackVideoRef.current) {
-            const duration = playbackVideoRef.current.duration || 0;
+            // Use estimated duration if video duration is not available
+            const duration = playbackVideoRef.current.duration && !isNaN(playbackVideoRef.current.duration) && playbackVideoRef.current.duration !== Infinity
+              ? playbackVideoRef.current.duration 
+              : result.estimatedDuration;
             playbackVideoRef.current.currentTime = Math.max(0, duration - seconds);
             playbackVideoRef.current.play();
           }
@@ -190,17 +222,22 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
   const skipForward = useCallback((seconds: number) => {
     if (!isLiveMode && playbackVideoRef.current) {
       const newTime = playbackVideoRef.current.currentTime + seconds;
-      if (newTime >= playbackVideoRef.current.duration) {
+      // Use playbackDuration state which may have our estimated duration
+      const effectiveDuration = playbackVideoRef.current.duration && !isNaN(playbackVideoRef.current.duration) && playbackVideoRef.current.duration !== Infinity
+        ? playbackVideoRef.current.duration
+        : playbackDuration;
+      if (newTime >= effectiveDuration) {
         goLive();
       } else {
         playbackVideoRef.current.currentTime = newTime;
       }
     }
-  }, [isLiveMode, goLive]);
+  }, [isLiveMode, goLive, playbackDuration]);
 
   const handleSeek = useCallback((value: number[]) => {
     if (!isLiveMode && playbackVideoRef.current) {
       playbackVideoRef.current.currentTime = value[0];
+      setPlaybackTime(value[0]); // Immediate feedback
     }
   }, [isLiveMode]);
 
@@ -354,19 +391,21 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
 
                   {/* DVR Controls */}
                   <div className="border-t border-zinc-800 bg-zinc-900 p-4 flex-shrink-0">
-                    {/* Progress bar for playback mode */}
-                    {!isLiveMode && playbackDuration > 0 && (
+                    {/* Progress bar for playback mode - always show when not live */}
+                    {!isLiveMode && (
                       <div className="mb-4">
-                        <Slider
-                          value={[playbackTime]}
-                          max={playbackDuration}
-                          step={0.1}
-                          onValueChange={handleSeek}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between mt-1 text-xs text-zinc-500 font-mono">
-                          <span>{formatDuration(playbackTime)}</span>
-                          <span>{formatDuration(playbackDuration)}</span>
+                        <div className="relative">
+                          <Slider
+                            value={[playbackTime]}
+                            max={playbackDuration || 1}
+                            step={0.1}
+                            onValueChange={handleSeek}
+                            className="w-full [&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:border-2"
+                          />
+                        </div>
+                        <div className="flex justify-between mt-2 text-xs text-zinc-400 font-mono">
+                          <span className="bg-zinc-800 px-2 py-0.5 rounded">{formatDuration(playbackTime)}</span>
+                          <span className="bg-zinc-800 px-2 py-0.5 rounded">{formatDuration(playbackDuration)}</span>
                         </div>
                       </div>
                     )}

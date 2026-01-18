@@ -48,6 +48,8 @@ export function StreamCardLive({ stream, duration, onClick }: StreamCardLiveProp
     return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
   };
 
+  const hasValidLocation = stream.latitude !== 0 || stream.longitude !== 0;
+
   return (
     <div
       className="group relative overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 cursor-pointer transition-all duration-200 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10"
@@ -112,10 +114,24 @@ export function StreamCardLive({ stream, duration, onClick }: StreamCardLiveProp
           )}
         </div>
 
-        {/* Location */}
-        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-          <MapPin className="h-3 w-3 flex-shrink-0" />
-          <span className="truncate">{formatCoords(stream.latitude, stream.longitude)}</span>
+        {/* Location with mini map */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+            <MapPin className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{formatCoords(stream.latitude, stream.longitude)}</span>
+          </div>
+          
+          {/* Mini map preview */}
+          {hasValidLocation && (
+            <div className="relative h-16 w-full rounded overflow-hidden border border-zinc-700">
+              <img
+                src={`https://static-maps.yandex.ru/1.x/?ll=${stream.longitude},${stream.latitude}&z=14&l=map&size=300,100&pt=${stream.longitude},${stream.latitude},pm2rdl`}
+                alt="Location"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
         </div>
 
         {/* Notes */}
