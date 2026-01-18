@@ -39,39 +39,50 @@ export function useDashboard(): UseDashboardReturn {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    // Don't create new connection if already open or connecting
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
 
-    const ws = new WebSocket(signalingConfig.dashboardWs);
-    wsRef.current = ws;
+    try {
+      const ws = new WebSocket(signalingConfig.dashboardWs);
+      wsRef.current = ws;
 
-    ws.onopen = () => {
-      console.log("[Dashboard] Connected to signaling server");
-      setIsConnected(true);
-      setError(null);
-    };
+      ws.onopen = () => {
+        console.log("[Dashboard] Connected to signaling server");
+        setIsConnected(true);
+        setError(null);
+      };
 
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        if (message.type === "stream_list") {
-          setStreams(message.streams || []);
-          setPastStreams(message.past_streams || []);
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === "stream_list") {
+            setStreams(message.streams || []);
+            setPastStreams(message.past_streams || []);
+          }
+        } catch (err) {
+          console.error("[Dashboard] Failed to parse message:", err, "Data:", event.data);
         }
-      } catch (err) {
-        console.error("[Dashboard] Failed to parse message:", err);
-      }
-    };
+      };
 
-    ws.onerror = () => {
-      setError("Connection error");
-    };
+      ws.onerror = (event) => {
+        console.error("[Dashboard] WebSocket error:", event);
+        setError("Connection error");
+      };
 
-    ws.onclose = () => {
-      console.log("[Dashboard] Disconnected, reconnecting...");
-      setIsConnected(false);
-      // Reconnect after 2 seconds
+      ws.onclose = () => {
+        console.log("[Dashboard] Disconnected, reconnecting in 2s...");
+        setIsConnected(false);
+        // Reconnect after 2 seconds
+        reconnectTimeoutRef.current = setTimeout(connect, 2000);
+      };
+    } catch (err) {
+      console.error("[Dashboard] Failed to create WebSocket:", err);
+      setError("Failed to connect to server");
+      // Retry connection
       reconnectTimeoutRef.current = setTimeout(connect, 2000);
-    };
+    }
   }, []);
 
   const deletePastStream = useCallback(async (streamId: string) => {
