@@ -11,9 +11,10 @@ interface StreamMapViewProps {
   streams: StreamData[];
   durations: Record<string, number>;
   onStreamClick: (stream: StreamData) => void;
+  focusLocation?: { lat: number; lng: number } | null;
 }
 
-export function StreamMapView({ streams, durations, onStreamClick }: StreamMapViewProps) {
+export function StreamMapView({ streams, durations, onStreamClick, focusLocation }: StreamMapViewProps) {
   const [selectedStream, setSelectedStream] = useState<StreamData | null>(null);
   const [hoveredStream, setHoveredStream] = useState<string | null>(null);
 
@@ -47,6 +48,7 @@ export function StreamMapView({ streams, durations, onStreamClick }: StreamMapVi
           streams={streams}
           durations={durations}
           onStreamClick={onStreamClick}
+          focusLocation={focusLocation}
         />
 
         {/* Stream List Sidebar */}
