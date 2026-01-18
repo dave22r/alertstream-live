@@ -251,7 +251,7 @@ async def analyze_with_openrouter(image_data: bytes, content_type: str) -> str:
                         "content": [
                             {
                                 "type": "text",
-                                "text": "Is there a mobile phone visible in this image? Answer only YES or NO."
+                                "text": "Analyze this image. List ALL that are visible: 1) GUN - NERF toy blaster (teal/slate blue body, orange NERF logo, TRIO ELITE 2.0, three orange barrels), 2) PHONE - mobile phone/smartphone, 3) SUSPECT - CRITICAL: Person MUST be wearing a GREY colored hoodie/jacket. If clothing is NOT grey (black, blue, white, any other color) then DO NOT mark as SUSPECT. Also requires transparent/clear rectangular glasses. Do NOT classify anyone as SUSPECT unless their hoodie/jacket is clearly GREY colored. Reply with comma-separated list (e.g. 'GUN,SUSPECT' or 'PHONE' or 'NONE' if nothing detected)."
                             },
                             {
                                 "type": "image_url",
@@ -302,7 +302,7 @@ async def analyze_frame(
                     model='gemini-2.0-flash-exp',
                     contents={
                         'parts': [
-                            {'text': 'Is there a mobile phone visible in this image? Answer only YES or NO.'},
+                            {'text': 'Analyze this image. List ALL that are visible: 1) GUN - NERF toy blaster (teal/slate blue body, orange NERF logo, TRIO ELITE 2.0, three orange barrels), 2) PHONE - mobile phone/smartphone, 3) SUSPECT - CRITICAL: Person MUST be wearing a GREY colored hoodie/jacket. If clothing is NOT grey (black, blue, white, any other color) then DO NOT mark as SUSPECT. Also requires transparent/clear rectangular glasses. Do NOT classify anyone as SUSPECT unless their hoodie/jacket is clearly GREY colored. Reply with comma-separated list (e.g. GUN,SUSPECT or PHONE or NONE if nothing detected).'},
                             {
                                 'inline_data': {
                                     'mime_type': frame.content_type or 'image/jpeg',
@@ -326,17 +326,39 @@ async def analyze_frame(
         if answer is None:
             raise Exception("All AI providers failed")
         
-        threat_detected = "YES" in answer
-        print(f"[AI Sentry] Threat detected: {threat_detected}")
+        # Determine what was detected (can be multiple)
+        gun_detected = "GUN" in answer
+        phone_detected = "PHONE" in answer
+        suspect_detected = "SUSPECT" in answer
+        threat_detected = gun_detected or phone_detected or suspect_detected
         
-        if threat_detected:
+        # Build list of detected items
+        detections = []
+        detection_types = []
+        if suspect_detected:
+            detections.append("Suspect Detected")
+            detection_types.append("suspect")
+        if gun_detected:
+            detections.append("NERF Toy Blaster Detected")
+            detection_types.append("gun")
+        if phone_detected:
+            detections.append("Mobile Phone Detected")
+            detection_types.append("phone")
+        
+        # Combined alert message
+        alert_message = " + ".join(detections) if detections else None
+        
+        print(f"[AI Sentry] Detection result: gun={gun_detected}, phone={phone_detected}, suspect={suspect_detected}")
+        
+        if threat_detected and alert_message:
             # Send alert to all dashboards
-            print(f"[AI Sentry] Broadcasting alert to {len(dashboard_connections)} dashboard connections")
-            await broadcast_alert(stream_id, latitude, longitude, "Mobile Phone Detected")
+            print(f"[AI Sentry] Broadcasting alert: {alert_message} to {len(dashboard_connections)} dashboard connections")
+            await broadcast_alert(stream_id, latitude, longitude, alert_message)
         
         return {
             "success": True,
             "threat_detected": threat_detected,
+            "detection_types": detection_types,
             "analysis": answer,
             "stream_id": stream_id
         }
