@@ -23,28 +23,13 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Initialize Gemini - with graceful fallback if not available
-genai = None
-model = None
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Initialize OpenRouter API key
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-if GEMINI_API_KEY:
-    try:
-        from google import genai as genai_module
-        client = genai_module.Client(api_key=GEMINI_API_KEY)
-        genai = genai_module
-        model = client.models
-        print("[AI Sentry] Gemini AI initialized successfully")
-    except ImportError:
-        print("[AI Sentry] WARNING: google-genai package not installed")
-    except Exception as e:
-        print(f"[AI Sentry] WARNING: Failed to initialize Gemini: {e}")
-
-if not model and OPENROUTER_API_KEY:
-    print("[AI Sentry] OpenRouter API key found - will use as fallback")
-elif not model and not OPENROUTER_API_KEY:
-    print("[AI Sentry] No AI provider configured - AI features disabled")
+if OPENROUTER_API_KEY:
+    print("[AI Sentry] OpenRouter API key loaded successfully - using OpenAI GPT-4o")
+else:
+    print("[AI Sentry] WARNING: No OpenRouter API key found - AI features disabled")
 
 app = FastAPI(title="EmergencyEye Signaling Server")
 
@@ -231,7 +216,7 @@ async def broadcast_alert(stream_id: str, latitude: float, longitude: float, thr
 
 
 async def analyze_with_openrouter(image_data: bytes, content_type: str) -> str:
-    """Analyze image using OpenRouter API with Gemini model."""
+    """Analyze image using OpenRouter API with OpenAI GPT-4o vision model."""
     import httpx
     
     image_base64 = base64.b64encode(image_data).decode('utf-8')
@@ -244,7 +229,7 @@ async def analyze_with_openrouter(image_data: bytes, content_type: str) -> str:
                 "Content-Type": "application/json",
             },
             json={
-                "model": "google/gemini-2.0-flash-exp:free",
+                "model": "openai/gpt-4o",
                 "messages": [
                     {
                         "role": "user",
@@ -280,10 +265,10 @@ async def analyze_frame(
     longitude: float = Form(0),
     frame: UploadFile = File(...)
 ):
-    """Analyze a video frame for threats using Gemini AI (with OpenRouter fallback)."""
+    """Analyze a video frame for threats using OpenAI GPT-4o vision via OpenRouter."""
     print(f"[AI Sentry] Received frame analysis request for stream: {stream_id}")
     
-    if not model and not OPENROUTER_API_KEY:
+    if not OPENROUTER_API_KEY:
         print("[AI Sentry] ERROR: No AI provider available")
         raise HTTPException(status_code=503, detail="No AI provider configured")
     
@@ -292,39 +277,13 @@ async def analyze_frame(
         image_data = await frame.read()
         print(f"[AI Sentry] Frame size: {len(image_data)} bytes, type: {frame.content_type}")
         
-        answer = None
+        # Use OpenRouter with OpenAI GPT-4o
+        print("[AI Sentry] Sending to OpenAI GPT-4o via OpenRouter...")
+        answer = await analyze_with_openrouter(image_data, frame.content_type)
+        print(f"[AI Sentry] OpenAI response: '{answer}'")
         
-        # Try Gemini first
-        if model:
-            try:
-                print("[AI Sentry] Sending to Gemini for analysis...")
-                response = model.generate_content(
-                    model='gemini-2.0-flash-exp',
-                    contents={
-                        'parts': [
-                            {'text': 'Analyze this image. List ALL that are visible: 1) GUN - NERF toy blaster (teal/slate blue body, orange NERF logo, TRIO ELITE 2.0, three orange barrels), 2) SUSPECT - CRITICAL: Person MUST be wearing a GREY colored hoodie/jacket. If clothing is NOT grey (black, blue, white, any other color) then DO NOT mark as SUSPECT. Also requires transparent/clear rectangular glasses. Do NOT classify anyone as SUSPECT unless their hoodie/jacket is clearly GREY colored. Reply with comma-separated list (e.g. GUN,SUSPECT or GUN or NONE if nothing detected).'},
-                            {
-                                'inline_data': {
-                                    'mime_type': frame.content_type or 'image/jpeg',
-                                    'data': base64.b64encode(image_data).decode('utf-8')
-                                }
-                            }
-                        ]
-                    }
-                )
-                answer = response.text.strip().upper()
-                print(f"[AI Sentry] Gemini response: '{answer}'")
-            except Exception as e:
-                print(f"[AI Sentry] Gemini failed: {e}, trying OpenRouter fallback...")
-        
-        # Fallback to OpenRouter
-        if answer is None and OPENROUTER_API_KEY:
-            print("[AI Sentry] Using OpenRouter fallback...")
-            answer = await analyze_with_openrouter(image_data, frame.content_type)
-            print(f"[AI Sentry] OpenRouter response: '{answer}'")
-        
-        if answer is None:
-            raise Exception("All AI providers failed")
+        if not answer:
+            raise Exception("AI provider returned empty response")
         
         # Determine what was detected (can be multiple)
         gun_detected = "GUN" in answer
