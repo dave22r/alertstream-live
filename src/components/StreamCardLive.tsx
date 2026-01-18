@@ -16,9 +16,10 @@ interface StreamCardLiveProps {
   stream: StreamData;
   duration: number;
   onClick: () => void;
+  highlighted?: boolean;
 }
 
-export function StreamCardLive({ stream, duration, onClick }: StreamCardLiveProps) {
+export function StreamCardLive({ stream, duration, onClick, highlighted }: StreamCardLiveProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const { remoteStream, isReceiving, connect, disconnect } = useViewer({
@@ -50,7 +51,11 @@ export function StreamCardLive({ stream, duration, onClick }: StreamCardLiveProp
 
   return (
     <div
-      className="group relative overflow-hidden rounded-lg border border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)] cursor-pointer transition-all duration-300 hover:border-[hsl(350,100%,55%)]/50 hover:shadow-[0_0_40px_-10px_hsl(350,100%,55%)]"
+      className={`group relative overflow-hidden rounded-lg border bg-[hsl(240,15%,6%)] cursor-pointer transition-all duration-300 hover:border-[hsl(350,100%,55%)]/50 hover:shadow-[0_0_40px_-10px_hsl(350,100%,55%)] ${
+        highlighted
+          ? 'border-[hsl(350,100%,55%)] shadow-[0_0_60px_-10px_hsl(350,100%,55%)] ring-2 ring-[hsl(350,100%,55%)] animate-pulse'
+          : 'border-[hsl(220,15%,12%)]'
+      }`}
       onClick={onClick}
     >
       {/* Video Preview - Fixed aspect ratio */}

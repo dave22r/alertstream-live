@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Shield,
@@ -15,6 +15,13 @@ import {
   LayoutGrid,
   Map,
   LogOut,
+  AlertTriangle,
+  X,
+  Bell,
+  ChevronRight,
+  ChevronLeft,
+  Eye,
+  Navigation,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,7 +48,7 @@ import { StreamCardLive, type StreamData } from "@/components/StreamCardLive";
 import { ExpandedStreamView } from "@/components/ExpandedStreamView";
 import { PastStreamViewer } from "@/components/PastStreamViewer";
 import { StreamMapView } from "@/components/StreamMapView";
-import { useDashboard, type StreamInfo, type PastStreamInfo } from "@/hooks/useDashboard";
+import { useDashboard, type StreamInfo, type PastStreamInfo, type ThreatAlert } from "@/hooks/useDashboard";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Convert server stream info to StreamData format
@@ -84,6 +91,10 @@ export default function PoliceDashboard() {
   const [streamToDelete, setStreamToDelete] = useState<PastStreamInfo | null>(null);
   const [durations, setDurations] = useState<Record<string, number>>({});
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [alerts, setAlerts] = useState<ThreatAlert[]>([]);
+  const [alertsSidebarOpen, setAlertsSidebarOpen] = useState(true);
+  const [highlightedStreamId, setHighlightedStreamId] = useState<string | null>(null);
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Location filter state
   const [filterEnabled, setFilterEnabled] = useState(false);
@@ -91,8 +102,55 @@ export default function PoliceDashboard() {
   const [filterLng, setFilterLng] = useState("");
   const [filterRadius, setFilterRadius] = useState(10); // km
 
-  // Connect to signaling server
-  const { streams: serverStreams, pastStreams, isConnected, deletePastStream } = useDashboard();
+  // Handle threat alerts from AI Sentry
+  const handleThreatAlert = useCallback((alert: ThreatAlert) => {
+    console.log("[AI Sentry] Threat detected:", alert);
+    // Add to alerts array (newest first)
+    setAlerts((prev) => [alert, ...prev]);
+    // Open sidebar when new alert comes in
+    setAlertsSidebarOpen(true);
+    
+    // Play alert sound
+    try {
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = "square";
+      gainNode.gain.value = 0.3;
+      
+      oscillator.start();
+      
+      // Beep pattern: 3 short beeps
+      setTimeout(() => { gainNode.gain.value = 0; }, 150);
+      setTimeout(() => { gainNode.gain.value = 0.3; }, 250);
+      setTimeout(() => { gainNode.gain.value = 0; }, 400);
+      setTimeout(() => { gainNode.gain.value = 0.3; }, 500);
+      setTimeout(() => { gainNode.gain.value = 0; }, 650);
+      setTimeout(() => { oscillator.stop(); }, 700);
+    } catch (e) {
+      console.log("Could not play alert sound:", e);
+    }
+  }, []);
+
+  // Dismiss a single alert
+  const dismissAlert = useCallback((alertTimestamp: string) => {
+    setAlerts((prev) => prev.filter((a) => a.timestamp !== alertTimestamp));
+  }, []);
+
+  // Clear all alerts
+  const clearAllAlerts = useCallback(() => {
+    setAlerts([]);
+  }, []);
+
+  // Connect to signaling server with alert handler
+  const { streams: serverStreams, pastStreams, isConnected, deletePastStream } = useDashboard({
+    onAlert: handleThreatAlert,
+  });
 
   const handleLogout = () => {
     logout();
@@ -120,6 +178,39 @@ export default function PoliceDashboard() {
       return distance <= filterRadius;
     });
   }, [serverStreams, filterEnabled, filterLat, filterLng, filterRadius]);
+
+  // Handle clicking an alert to focus on the stream
+  const handleAlertClick = (alert: ThreatAlert) => {
+    // Find matching stream
+    const matchingStream = allStreams.find((s) => s.id === alert.stream_id);
+    if (matchingStream) {
+      // Highlight the stream card
+      setHighlightedStreamId(alert.stream_id);
+      // Clear any existing timeout
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+      // Open expanded view
+      setSelectedStream(matchingStream);
+      // Remove highlight after 3 seconds
+      highlightTimeoutRef.current = setTimeout(() => {
+        setHighlightedStreamId(null);
+      }, 3000);
+    } else {
+      // Stream no longer active, check past streams
+      const matchingPastStream = pastStreams.find((s) => s.id === alert.stream_id);
+      if (matchingPastStream) {
+        setSelectedPastStream(matchingPastStream);
+      }
+    }
+  };
+
+  // Handle viewing alert location on map
+  const handleViewOnMap = (alert: ThreatAlert) => {
+    // Open Google Maps in new tab with the alert location
+    const mapsUrl = `https://www.google.com/maps?q=${alert.latitude},${alert.longitude}&z=18`;
+    window.open(mapsUrl, '_blank');
+  };
 
   // Duration counter
   useEffect(() => {
@@ -189,8 +280,21 @@ export default function PoliceDashboard() {
     });
   };
 
+  const formatAlertTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
+
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen text-white flex">
+      {/* Main Content Area */}
+      <div className={`flex-1 transition-all duration-300 relative z-50 ${alertsSidebarOpen ? 'ml-80' : 'ml-0'}`}>
+
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-[hsl(220,15%,12%)] bg-[hsl(240,15%,4%)]/95 backdrop-blur-xl">
         <div className="flex items-center justify-between px-4 py-3 lg:px-6">
@@ -406,6 +510,7 @@ export default function PoliceDashboard() {
                     stream={stream}
                     duration={durations[stream.id] || 0}
                     onClick={() => setSelectedStream(stream)}
+                    highlighted={highlightedStreamId === stream.id}
                   />
                 </div>
               ))}
@@ -582,6 +687,159 @@ export default function PoliceDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
+
+      {/* Alerts Sidebar */}
+      <aside
+        className={`fixed top-[57px] left-0 h-[calc(100vh-57px)] bg-[hsl(240,15%,4%)] border-r border-[hsl(220,15%,12%)] transition-all duration-300 z-30 ${
+          alertsSidebarOpen ? 'w-80 translate-x-0' : 'w-80 -translate-x-full'
+        }`}
+      >
+        {/* Sidebar Toggle Button */}
+        <button
+          onClick={() => setAlertsSidebarOpen(!alertsSidebarOpen)}
+          className={`absolute top-4 -right-10 h-20 w-10 flex items-center justify-center bg-[hsl(240,15%,6%)] border border-[hsl(220,15%,15%)] border-l-0 rounded-r-lg hover:bg-[hsl(240,15%,10%)] transition-colors ${
+            alerts.length > 0 ? 'text-[hsl(350,100%,60%)]' : 'text-[hsl(220,15%,50%)]'
+          }`}
+        >
+          {alertsSidebarOpen ? (
+            <ChevronLeft className="h-5 w-5" />
+          ) : (
+            <div className="relative">
+              <Bell className="h-5 w-5" />
+              {alerts.length > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full bg-[hsl(350,100%,50%)] text-[10px] font-bold text-white">
+                  {alerts.length > 9 ? '9+' : alerts.length}
+                </span>
+              )}
+            </div>
+          )}
+        </button>
+
+        {/* Sidebar Header */}
+        <div className="bg-[hsl(240,15%,4%)] border-b border-[hsl(220,15%,12%)] p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`relative flex h-9 w-9 items-center justify-center rounded-lg border ${
+                alerts.length > 0
+                  ? 'bg-[hsl(350,100%,50%)]/15 border-[hsl(350,100%,50%)]/30'
+                  : 'bg-[hsl(220,15%,10%)] border-[hsl(220,15%,18%)]'
+              }`}>
+                <Bell className={`h-4 w-4 ${alerts.length > 0 ? 'text-[hsl(350,100%,60%)]' : 'text-[hsl(220,15%,50%)]'}`} />
+                {alerts.length > 0 && (
+                  <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[hsl(350,100%,55%)] animate-emergency-pulse" />
+                )}
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-white tracking-tight">AI Sentry Alerts</h2>
+                <p className="text-[10px] text-[hsl(220,15%,45%)]">
+                  {alerts.length > 0 ? `${alerts.length} active alert${alerts.length !== 1 ? 's' : ''}` : 'No alerts'}
+                </p>
+              </div>
+            </div>
+            {alerts.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllAlerts}
+                className="h-7 px-2 text-[10px] text-[hsl(220,15%,50%)] hover:text-[hsl(350,100%,60%)] hover:bg-[hsl(350,100%,50%)]/10"
+              >
+                Clear All
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Alerts List */}
+        <div className="overflow-y-auto p-3 space-y-2" style={{ maxHeight: 'calc(100vh - 57px - 80px)' }}>
+          {alerts.length > 0 ? (
+            alerts.map((alert, index) => (
+              <div
+                key={alert.timestamp + index}
+                className="group relative bg-gradient-to-br from-[hsl(350,100%,50%)]/15 to-[hsl(350,100%,40%)]/5 border border-[hsl(350,100%,50%)]/40 rounded-xl p-3 cursor-pointer hover:from-[hsl(350,100%,50%)]/25 hover:to-[hsl(350,100%,40%)]/10 hover:border-[hsl(350,100%,50%)]/60 transition-all duration-200 animate-fade-in shadow-[0_0_20px_-8px_hsl(350,100%,50%)]"
+                onClick={() => handleAlertClick(alert)}
+              >
+                {/* Alert Header */}
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(350,100%,50%)]/20 border border-[hsl(350,100%,50%)]/30 flex-shrink-0">
+                    <AlertTriangle className="h-4 w-4 text-[hsl(350,100%,60%)]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-[hsl(350,100%,65%)] uppercase tracking-wide">🚨 Threat</span>
+                      <span className="text-[10px] text-[hsl(220,15%,55%)] font-mono bg-[hsl(240,15%,8%)] px-1.5 py-0.5 rounded">
+                        {formatAlertTime(alert.timestamp)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-white mt-1 font-medium">{alert.threat_type}</p>
+                  </div>
+                </div>
+
+                {/* Alert Details */}
+                <div className="mt-3 space-y-1.5 pl-10">
+                  <p className="text-[11px] text-[hsl(220,15%,55%)] font-mono flex items-center gap-1.5">
+                    <Video className="h-3 w-3 text-[hsl(350,100%,55%)]" />
+                    Stream: {alert.stream_id.substring(0, 12)}...
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[hsl(220,15%,50%)]">
+                    <MapPin className="h-3 w-3 text-[hsl(350,100%,55%)]" />
+                    <span className="text-[11px] font-mono">
+                      {alert.latitude.toFixed(5)}, {alert.longitude.toFixed(5)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-[hsl(350,100%,50%)]/20">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-[10px] text-[hsl(350,100%,60%)] hover:text-white hover:bg-[hsl(350,100%,50%)]/25 gap-1 font-medium"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAlertClick(alert);
+                    }}
+                  >
+                    <Eye className="h-3 w-3" />
+                    View Stream
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-[10px] text-[hsl(190,100%,55%)] hover:text-white hover:bg-[hsl(190,100%,50%)]/20 gap-1 font-medium"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewOnMap(alert);
+                    }}
+                  >
+                    <Navigation className="h-3 w-3" />
+                    View on Map
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-[10px] text-[hsl(220,15%,50%)] hover:text-[hsl(350,100%,60%)] hover:bg-[hsl(350,100%,50%)]/10 gap-1 ml-auto"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dismissAlert(alert.timestamp);
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(240,15%,8%)] border border-[hsl(220,15%,15%)] mb-3">
+                <Bell className="h-5 w-5 text-[hsl(220,15%,30%)]" />
+              </div>
+              <p className="text-sm text-[hsl(220,15%,45%)] font-medium">No Active Alerts</p>
+              <p className="text-xs text-[hsl(220,15%,35%)] mt-1">AI Sentry is monitoring</p>
+            </div>
+          )}
+        </div>
+      </aside>
     </div>
   );
 }
