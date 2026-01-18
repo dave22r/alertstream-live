@@ -22,6 +22,18 @@ export interface PastStreamInfo {
   video_url: string;
 }
 
+export interface ThreatAlert {
+  stream_id: string;
+  latitude: number;
+  longitude: number;
+  threat_type: string;
+  timestamp: string;
+}
+
+interface UseDashboardOptions {
+  onAlert?: (alert: ThreatAlert) => void;
+}
+
 interface UseDashboardReturn {
   streams: StreamInfo[];
   pastStreams: PastStreamInfo[];
@@ -30,13 +42,20 @@ interface UseDashboardReturn {
   deletePastStream: (streamId: string) => Promise<void>;
 }
 
-export function useDashboard(): UseDashboardReturn {
+export function useDashboard(options?: UseDashboardOptions): UseDashboardReturn {
+  const { onAlert } = options || {};
   const [streams, setStreams] = useState<StreamInfo[]>([]);
   const [pastStreams, setPastStreams] = useState<PastStreamInfo[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const onAlertRef = useRef(onAlert);
+  
+  // Keep ref updated
+  useEffect(() => {
+    onAlertRef.current = onAlert;
+  }, [onAlert]);
 
   const connect = useCallback(() => {
     // Don't create new connection if already open or connecting
@@ -60,6 +79,17 @@ export function useDashboard(): UseDashboardReturn {
           if (message.type === "stream_list") {
             setStreams(message.streams || []);
             setPastStreams(message.past_streams || []);
+          } else if (message.type === "alert") {
+            // Handle threat alert from AI Sentry
+            if (onAlertRef.current) {
+              onAlertRef.current({
+                stream_id: message.stream_id,
+                latitude: message.latitude,
+                longitude: message.longitude,
+                threat_type: message.threat_type,
+                timestamp: message.timestamp,
+              });
+            }
           }
         } catch (err) {
           console.error("[Dashboard] Failed to parse message:", err, "Data:", event.data);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Activity,
@@ -15,6 +15,8 @@ import {
   LayoutGrid,
   Map,
   LogOut,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,7 +43,7 @@ import { StreamCardLive, type StreamData } from "@/components/StreamCardLive";
 import { ExpandedStreamView } from "@/components/ExpandedStreamView";
 import { PastStreamViewer } from "@/components/PastStreamViewer";
 import { StreamMapView } from "@/components/StreamMapView";
-import { useDashboard, type StreamInfo, type PastStreamInfo } from "@/hooks/useDashboard";
+import { useDashboard, type StreamInfo, type PastStreamInfo, type ThreatAlert } from "@/hooks/useDashboard";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Convert server stream info to StreamData format
@@ -84,6 +86,7 @@ export default function PoliceDashboard() {
   const [streamToDelete, setStreamToDelete] = useState<PastStreamInfo | null>(null);
   const [durations, setDurations] = useState<Record<string, number>>({});
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [threatAlert, setThreatAlert] = useState<ThreatAlert | null>(null);
 
   // Location filter state
   const [filterEnabled, setFilterEnabled] = useState(false);
@@ -91,8 +94,42 @@ export default function PoliceDashboard() {
   const [filterLng, setFilterLng] = useState("");
   const [filterRadius, setFilterRadius] = useState(10); // km
 
-  // Connect to signaling server
-  const { streams: serverStreams, pastStreams, isConnected, deletePastStream } = useDashboard();
+  // Handle threat alerts from AI Sentry
+  const handleThreatAlert = useCallback((alert: ThreatAlert) => {
+    console.log("[AI Sentry] Threat detected:", alert);
+    setThreatAlert(alert);
+    
+    // Play alert sound
+    try {
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = "square";
+      gainNode.gain.value = 0.3;
+      
+      oscillator.start();
+      
+      // Beep pattern: 3 short beeps
+      setTimeout(() => { gainNode.gain.value = 0; }, 150);
+      setTimeout(() => { gainNode.gain.value = 0.3; }, 250);
+      setTimeout(() => { gainNode.gain.value = 0; }, 400);
+      setTimeout(() => { gainNode.gain.value = 0.3; }, 500);
+      setTimeout(() => { gainNode.gain.value = 0; }, 650);
+      setTimeout(() => { oscillator.stop(); }, 700);
+    } catch (e) {
+      console.log("Could not play alert sound:", e);
+    }
+  }, []);
+
+  // Connect to signaling server with alert handler
+  const { streams: serverStreams, pastStreams, isConnected, deletePastStream } = useDashboard({
+    onAlert: handleThreatAlert,
+  });
 
   const handleLogout = () => {
     logout();
@@ -191,6 +228,35 @@ export default function PoliceDashboard() {
 
   return (
     <div className="min-h-screen text-white">
+      {/* AI Sentry Threat Alert Toast */}
+      {threatAlert && (
+        <div className="fixed top-4 right-4 z-[100] animate-fade-in">
+          <div className="relative bg-[hsl(350,100%,50%)] text-white rounded-lg shadow-[0_0_60px_-10px_hsl(350,100%,55%)] border border-[hsl(350,100%,60%)] p-4 pr-12 min-w-[320px]">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <AlertTriangle className="h-6 w-6 animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg tracking-tight">🚨 THREAT DETECTED</h3>
+                <p className="text-sm mt-1 text-white/90">{threatAlert.threat_type}</p>
+                <p className="text-xs mt-2 text-white/70 font-mono">
+                  Location: {threatAlert.latitude.toFixed(4)}, {threatAlert.longitude.toFixed(4)}
+                </p>
+                <p className="text-xs text-white/60 font-mono mt-1">
+                  Stream: {threatAlert.stream_id.substring(0, 12)}...
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setThreatAlert(null)}
+              className="absolute top-3 right-3 p-1 rounded-full hover:bg-white/20 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-[hsl(220,15%,12%)] bg-[hsl(240,15%,4%)]/95 backdrop-blur-xl">
         <div className="flex items-center justify-between px-4 py-3 lg:px-6">

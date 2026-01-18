@@ -2,6 +2,7 @@
 WebRTC Signaling Server for SafeStream
 Handles WebSocket connections for WebRTC peer connection signaling.
 Also handles video recording storage and retrieval.
+Includes AI Sentry for threat detection using Gemini.
 """
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, Form, HTTPException
@@ -15,7 +16,19 @@ import json
 import asyncio
 import os
 import uuid
+import base64
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Initialize Gemini
+import google.generativeai as genai
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 app = FastAPI(title="SafeStream Signaling Server")
 
@@ -173,6 +186,89 @@ async def delete_past_stream(stream_id: str):
     await broadcast_stream_list()
     
     return {"success": True}
+
+
+async def broadcast_alert(stream_id: str, latitude: float, longitude: float, threat_type: str):
+    """Send threat alert to all dashboard connections."""
+    print(f"[AI Sentry] Broadcasting alert: {threat_type} at ({latitude}, {longitude})")
+    
+    message = json.dumps({
+        "type": "alert",
+        "stream_id": stream_id,
+        "latitude": latitude,
+        "longitude": longitude,
+        "threat_type": threat_type,
+        "timestamp": datetime.now().isoformat()
+    })
+    
+    disconnected = []
+    for ws in dashboard_connections:
+        try:
+            await ws.send_text(message)
+            print(f"[AI Sentry] Alert sent to dashboard connection")
+        except Exception as e:
+            print(f"[AI Sentry] Failed to send alert: {e}")
+            disconnected.append(ws)
+    
+    for ws in disconnected:
+        dashboard_connections.remove(ws)
+
+
+@app.post("/analyze-frame")
+async def analyze_frame(
+    stream_id: str = Form(...),
+    latitude: float = Form(0),
+    longitude: float = Form(0),
+    frame: UploadFile = File(...)
+):
+    """Analyze a video frame for threats using Gemini AI."""
+    print(f"[AI Sentry] Received frame analysis request for stream: {stream_id}")
+    
+    if not GEMINI_API_KEY:
+        print("[AI Sentry] ERROR: Gemini API key not configured")
+        raise HTTPException(status_code=503, detail="Gemini AI not configured")
+    
+    try:
+        # Read the image data
+        image_data = await frame.read()
+        print(f"[AI Sentry] Frame size: {len(image_data)} bytes, type: {frame.content_type}")
+        
+        # Use gemini-2.5-flash (latest stable)
+        model = genai.GenerativeModel("gemini-2.5-flash")
+        
+        # Create image part
+        image_part = {
+            "mime_type": frame.content_type or "image/jpeg",
+            "data": image_data
+        }
+        
+        # Send to Gemini for analysis
+        print("[AI Sentry] Sending to Gemini for analysis...")
+        response = model.generate_content([
+            "Is there a mobile phone visible in this image? Answer only YES or NO.",
+            image_part
+        ])
+        
+        # Parse response
+        answer = response.text.strip().upper()
+        threat_detected = "YES" in answer
+        print(f"[AI Sentry] Gemini response: '{answer}' -> Threat detected: {threat_detected}")
+        
+        if threat_detected:
+            # Send alert to all dashboards
+            print(f"[AI Sentry] Broadcasting alert to {len(dashboard_connections)} dashboard connections")
+            await broadcast_alert(stream_id, latitude, longitude, "Mobile Phone Detected")
+        
+        return {
+            "success": True,
+            "threat_detected": threat_detected,
+            "analysis": answer,
+            "stream_id": stream_id
+        }
+        
+    except Exception as e:
+        print(f"[AI Sentry] Gemini analysis error: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
 @app.websocket("/ws/dashboard")
