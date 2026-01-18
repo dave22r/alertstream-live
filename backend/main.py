@@ -25,19 +25,26 @@ load_dotenv()
 
 # Initialize Gemini - with graceful fallback if not available
 genai = None
+model = None
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
 if GEMINI_API_KEY:
     try:
-        import google.generativeai as genai_module
-        genai_module.configure(api_key=GEMINI_API_KEY)
+        from google import genai as genai_module
+        client = genai_module.Client(api_key=GEMINI_API_KEY)
         genai = genai_module
+        model = client.models
         print("[AI Sentry] Gemini AI initialized successfully")
     except ImportError:
-        print("[AI Sentry] WARNING: google-generativeai package not installed, AI features disabled")
+        print("[AI Sentry] WARNING: google-genai package not installed")
     except Exception as e:
         print(f"[AI Sentry] WARNING: Failed to initialize Gemini: {e}")
-else:
-    print("[AI Sentry] No GEMINI_API_KEY set, AI features disabled")
+
+if not model and OPENROUTER_API_KEY:
+    print("[AI Sentry] OpenRouter API key found - will use as fallback")
+elif not model and not OPENROUTER_API_KEY:
+    print("[AI Sentry] No AI provider configured - AI features disabled")
 
 app = FastAPI(title="SafeStream Signaling Server")
 
@@ -223,6 +230,49 @@ async def broadcast_alert(stream_id: str, latitude: float, longitude: float, thr
         dashboard_connections.remove(ws)
 
 
+async def analyze_with_openrouter(image_data: bytes, content_type: str) -> str:
+    """Analyze image using OpenRouter API with Gemini model."""
+    import httpx
+    
+    image_base64 = base64.b64encode(image_data).decode('utf-8')
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "google/gemini-2.0-flash-exp:free",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Is there a mobile phone visible in this image? Answer only YES or NO."
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{content_type or 'image/jpeg'};base64,{image_base64}"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            timeout=30.0
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result['choices'][0]['message']['content'].strip().upper()
+        else:
+            raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
+
+
 @app.post("/analyze-frame")
 async def analyze_frame(
     stream_id: str = Form(...),
@@ -230,38 +280,54 @@ async def analyze_frame(
     longitude: float = Form(0),
     frame: UploadFile = File(...)
 ):
-    """Analyze a video frame for threats using Gemini AI."""
+    """Analyze a video frame for threats using Gemini AI (with OpenRouter fallback)."""
     print(f"[AI Sentry] Received frame analysis request for stream: {stream_id}")
     
-    if not genai or not GEMINI_API_KEY:
-        print("[AI Sentry] ERROR: Gemini AI not available")
-        raise HTTPException(status_code=503, detail="Gemini AI not configured")
+    if not model and not OPENROUTER_API_KEY:
+        print("[AI Sentry] ERROR: No AI provider available")
+        raise HTTPException(status_code=503, detail="No AI provider configured")
     
     try:
         # Read the image data
         image_data = await frame.read()
         print(f"[AI Sentry] Frame size: {len(image_data)} bytes, type: {frame.content_type}")
         
-        # Use gemini-2.5-flash (latest stable)
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        answer = None
         
-        # Create image part
-        image_part = {
-            "mime_type": frame.content_type or "image/jpeg",
-            "data": image_data
-        }
+        # Try Gemini first
+        if model:
+            try:
+                print("[AI Sentry] Sending to Gemini for analysis...")
+                response = model.generate_content(
+                    model='gemini-2.0-flash-exp',
+                    contents={
+                        'parts': [
+                            {'text': 'Is there a mobile phone visible in this image? Answer only YES or NO.'},
+                            {
+                                'inline_data': {
+                                    'mime_type': frame.content_type or 'image/jpeg',
+                                    'data': base64.b64encode(image_data).decode('utf-8')
+                                }
+                            }
+                        ]
+                    }
+                )
+                answer = response.text.strip().upper()
+                print(f"[AI Sentry] Gemini response: '{answer}'")
+            except Exception as e:
+                print(f"[AI Sentry] Gemini failed: {e}, trying OpenRouter fallback...")
         
-        # Send to Gemini for analysis
-        print("[AI Sentry] Sending to Gemini for analysis...")
-        response = model.generate_content([
-            "Is there a mobile phone visible in this image? Answer only YES or NO.",
-            image_part
-        ])
+        # Fallback to OpenRouter
+        if answer is None and OPENROUTER_API_KEY:
+            print("[AI Sentry] Using OpenRouter fallback...")
+            answer = await analyze_with_openrouter(image_data, frame.content_type)
+            print(f"[AI Sentry] OpenRouter response: '{answer}'")
         
-        # Parse response
-        answer = response.text.strip().upper()
+        if answer is None:
+            raise Exception("All AI providers failed")
+        
         threat_detected = "YES" in answer
-        print(f"[AI Sentry] Gemini response: '{answer}' -> Threat detected: {threat_detected}")
+        print(f"[AI Sentry] Threat detected: {threat_detected}")
         
         if threat_detected:
             # Send alert to all dashboards
@@ -276,7 +342,7 @@ async def analyze_frame(
         }
         
     except Exception as e:
-        print(f"[AI Sentry] Gemini analysis error: {e}")
+        print(f"[AI Sentry] Analysis error: {e}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 

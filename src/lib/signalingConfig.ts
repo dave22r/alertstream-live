@@ -9,7 +9,7 @@ const getSignalingServer = () => {
     return "wss://alertstream-live-backend.onrender.com";
   }
   
-  return "ws://localhost:8000";
+  return "ws://localhost:8080";
 };
 
 const SIGNALING_SERVER = getSignalingServer();

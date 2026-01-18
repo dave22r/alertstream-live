@@ -44,6 +44,11 @@ export function useBroadcaster({
   const latitudeRef = useRef(latitude);
   const longitudeRef = useRef(longitude);
   const notesRef = useRef(notes);
+  
+  // AI analysis refs
+  const frameAnalysisIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const videoElementRef = useRef<HTMLVideoElement | null>(null);
+  const isBroadcastingRef = useRef(false);
 
   // Keep refs updated
   useEffect(() => {
@@ -51,6 +56,100 @@ export function useBroadcaster({
     longitudeRef.current = longitude;
     notesRef.current = notes;
   }, [latitude, longitude, notes]);
+
+  const captureAndAnalyzeFrame = useCallback(async () => {
+    if (!mediaStream || !isBroadcastingRef.current) {
+      console.log('[AI Sentry] Skipping - no stream or not broadcasting');
+      return;
+    }
+
+    try {
+      // Create a temporary video element if needed
+      if (!videoElementRef.current) {
+        videoElementRef.current = document.createElement('video');
+        videoElementRef.current.srcObject = mediaStream;
+        await videoElementRef.current.play();
+      }
+
+      // Wait a bit for video to be ready
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const video = videoElementRef.current;
+      if (!video.videoWidth || !video.videoHeight) {
+        console.log('[AI Sentry] Video not ready yet');
+        return;
+      }
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert to blob
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, 'image/jpeg', 0.8);
+      });
+
+      if (!blob) {
+        console.log('[AI Sentry] Failed to create blob');
+        return;
+      }
+
+      console.log('[AI Sentry] Sending frame for analysis...', blob.size, 'bytes');
+
+      // Send to backend for analysis
+      const formData = new FormData();
+      formData.append('stream_id', streamId);
+      formData.append('latitude', String(latitudeRef.current));
+      formData.append('longitude', String(longitudeRef.current));
+      formData.append('frame', blob, 'frame.jpg');
+
+      const response = await fetch(`${signalingConfig.httpBase}/analyze-frame`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.threat_detected) {
+          console.log('[AI Sentry] ⚠️ Threat detected:', result.analysis);
+        } else {
+          console.log('[AI Sentry] ✓ No threat detected');
+        }
+      } else {
+        console.error('[AI Sentry] Server error:', response.status, await response.text());
+      }
+    } catch (err) {
+      console.error('[AI Sentry] Frame analysis error:', err);
+    }
+  }, [mediaStream, streamId]);
+
+  const startFrameAnalysis = useCallback(() => {
+    // Analyze frame once at 5 second mark
+    if (frameAnalysisIntervalRef.current) {
+      clearTimeout(frameAnalysisIntervalRef.current);
+    }
+    
+    frameAnalysisIntervalRef.current = setTimeout(() => {
+      captureAndAnalyzeFrame();
+    }, 5000);
+  }, [captureAndAnalyzeFrame]);
+
+  const stopFrameAnalysis = useCallback(() => {
+    if (frameAnalysisIntervalRef.current) {
+      clearTimeout(frameAnalysisIntervalRef.current);
+      frameAnalysisIntervalRef.current = null;
+    }
+    
+    if (videoElementRef.current) {
+      videoElementRef.current.srcObject = null;
+      videoElementRef.current = null;
+    }
+  }, []);
 
   const uploadRecording = useCallback(async () => {
     if (recordedChunksRef.current.length === 0 || !streamStartTimeRef.current) {
@@ -122,17 +221,23 @@ export function useBroadcaster({
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
       console.log("[Broadcaster] Recording started");
+      
+      // Start AI frame analysis
+      startFrameAnalysis();
     } catch (err) {
       console.error("[Broadcaster] Failed to start recording:", err);
     }
-  }, [mediaStream, uploadRecording]);
+  }, [mediaStream, uploadRecording, startFrameAnalysis]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current = null;
     }
-  }, []);
+    
+    // Stop AI frame analysis
+    stopFrameAnalysis();
+  }, [stopFrameAnalysis]);
 
   const createPeerConnection = useCallback(
     (viewerId: string): RTCPeerConnection => {
@@ -174,6 +279,7 @@ export function useBroadcaster({
         case "stream_started":
           console.log("[Broadcaster] Stream registered:", message.stream_id);
           setIsBroadcasting(true);
+          isBroadcastingRef.current = true;
           break;
 
         case "viewer_joined": {
@@ -296,6 +402,7 @@ export function useBroadcaster({
         console.log("[Broadcaster] Disconnected from signaling server");
         setIsConnected(false);
         setIsBroadcasting(false);
+        isBroadcastingRef.current = false;
         
         // Attempt reconnection if not intentional cleanup
         if (!isCleanupRef.current && reconnectAttemptsRef.current < 5 && mediaStream) {
@@ -351,6 +458,7 @@ export function useBroadcaster({
     }
 
     setIsBroadcasting(false);
+    isBroadcastingRef.current = false;
     setIsConnected(false);
     setError(null);
     
