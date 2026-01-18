@@ -29,5 +29,21 @@ export const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    // TURN servers for production (relay when direct P2P fails)
+    {
+      urls: "turn:a.relay.metered.ca:80",
+      username: "e8dd65ccdba2df346a1b9eac",
+      credential: "VrjTnBB0+qCeeVTn",
+    },
+    {
+      urls: "turn:a.relay.metered.ca:443",
+      username: "e8dd65ccdba2df346a1b9eac",
+      credential: "VrjTnBB0+qCeeVTn",
+    },
+    {
+      urls: "turn:a.relay.metered.ca:443?transport=tcp",
+      username: "e8dd65ccdba2df346a1b9eac",
+      credential: "VrjTnBB0+qCeeVTn",
+    },
   ],
 };
