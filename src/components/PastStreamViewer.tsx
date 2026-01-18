@@ -15,6 +15,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
   const videoUrl = `${signalingConfig.httpBase}${stream.video_url}`;
 
   const formatDuration = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "00:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -58,7 +59,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
               variant="ghost" 
               size="sm"
               onClick={handleDownload}
-              className="text-[hsl(190,100%,50%)] hover:text-[hsl(190,100%,60%)] hover:bg-[hsl(190,100%,50%)]/10 gap-2"
+              className="text-[hsl(350,100%,55%)] hover:text-[hsl(350,100%,65%)] hover:bg-[hsl(350,100%,55%)]/10 gap-2"
             >
               <Download className="h-4 w-4" />
               Download
@@ -92,7 +93,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
                 <CardHeader className="border-b border-[hsl(220,15%,12%)] pb-3 bg-[hsl(240,15%,6%)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Play className="h-5 w-5 text-[hsl(190,100%,50%)]" />
+                      <Play className="h-5 w-5 text-[hsl(350,100%,50%)]" />
                       <CardTitle className="text-lg font-bold text-white tracking-tight">
                         Recorded Stream
                       </CardTitle>
@@ -122,7 +123,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
               <Card className="border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)]">
                 <CardHeader className="pb-3 bg-[hsl(240,15%,6%)]">
                   <CardTitle className="flex items-center gap-2 text-base text-white font-bold tracking-tight">
-                    <Calendar className="h-4 w-4 text-[hsl(190,100%,50%)]" />
+                    <Calendar className="h-4 w-4 text-[hsl(350,100%,50%)]" />
                     Stream Details
                   </CardTitle>
                 </CardHeader>
@@ -158,7 +159,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
                     <p className="text-xs font-medium uppercase tracking-wider text-[hsl(220,15%,45%)]">
                       Duration
                     </p>
-                    <p className="font-mono text-lg font-bold text-[hsl(190,100%,50%)]">
+                    <p className="font-mono text-lg font-bold text-[hsl(350,100%,50%)]">
                       {formatDuration(stream.duration_seconds)}
                     </p>
                   </div>
@@ -168,7 +169,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
               <Card className="border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)]">
                 <CardHeader className="pb-3 bg-[hsl(240,15%,6%)]">
                   <CardTitle className="flex items-center gap-2 text-base text-white font-bold tracking-tight">
-                    <MapPin className="h-4 w-4 text-[hsl(190,100%,50%)]" />
+                    <MapPin className="h-4 w-4 text-[hsl(350,100%,50%)]" />
                     Location
                   </CardTitle>
                 </CardHeader>

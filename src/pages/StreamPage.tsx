@@ -95,7 +95,7 @@ export default function StreamPage() {
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-md space-y-8 text-center">
           {/* Icon */}
-          <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-[hsl(350,100%,50%)/0.1] border border-[hsl(350,100%,50%)/0.2] animate-fade-in stagger-1">
+          <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-[hsl(350,100%,50%)]/10 border border-[hsl(350,100%,50%)]/20 animate-fade-in stagger-1">
             <div className="relative">
               <Radio className="h-14 w-14 text-[hsl(350,100%,60%)] animate-glow-pulse" />
             </div>

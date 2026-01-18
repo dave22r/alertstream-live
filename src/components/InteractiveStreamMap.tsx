@@ -217,7 +217,7 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
         
         {/* Streams without location */}
         {streams.length > validStreams.length && (
-          <div className="absolute top-4 right-4 bg-[hsl(35,100%,50%)/0.15] border border-[hsl(35,100%,50%)/0.3] rounded-lg px-3 py-2 pointer-events-auto">
+          <div className="absolute top-4 right-4 bg-[hsl(35,100%,50%)]/15 border border-[hsl(35,100%,50%)]/30 rounded-lg px-3 py-2 pointer-events-auto">
             <span className="text-xs text-[hsl(35,100%,60%)]">
               {streams.length - validStreams.length} acquiring location...
             </span>

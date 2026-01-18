@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Activity,
   Signal,
@@ -8,7 +8,6 @@ import {
   SlidersHorizontal,
   RotateCcw,
   Video,
-  Home,
   Clock,
   Play,
   Calendar,
@@ -97,7 +96,7 @@ export default function PoliceDashboard() {
 
   const handleLogout = () => {
     logout();
-    navigate('/police/login');
+    navigate('/');
   };
 
   // Convert and filter streams
@@ -173,6 +172,7 @@ export default function PoliceDashboard() {
   };
 
   const formatDuration = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "00:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -219,7 +219,7 @@ export default function PoliceDashboard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`h-8 gap-1.5 text-xs border-[hsl(220,15%,18%)] bg-[hsl(240,15%,8%)] hover:bg-[hsl(240,15%,12%)] transition-all duration-200 ${filterEnabled ? "border-[hsl(190,100%,50%)] text-[hsl(190,100%,50%)] shadow-[0_0_20px_-5px_hsl(190,100%,50%/0.4)]" : "text-[hsl(220,15%,55%)]"
+                  className={`h-8 gap-1.5 text-xs border-[hsl(220,15%,18%)] bg-[hsl(240,15%,8%)] hover:bg-[hsl(240,15%,12%)] transition-all duration-200 ${filterEnabled ? "border-[hsl(350,100%,50%)] text-[hsl(350,100%,50%)] shadow-[0_0_20px_-5px_hsl(350_100%_50%_/_0.4)]" : "text-[hsl(220,15%,55%)]"
                     }`}
                 >
                   <MapPin className="h-3.5 w-3.5" />
@@ -249,7 +249,7 @@ export default function PoliceDashboard() {
                           placeholder="49.2827"
                           value={filterLat}
                           onChange={(e) => setFilterLat(e.target.value)}
-                          className="h-8 text-xs bg-[hsl(240,15%,6%)] border-[hsl(220,15%,18%)] focus:border-[hsl(190,100%,50%)]"
+                          className="h-8 text-xs bg-[hsl(240,15%,6%)] border-[hsl(220,15%,18%)] focus:border-[hsl(350,100%,50%)]"
                         />
                       </div>
                       <div className="space-y-1">
@@ -258,7 +258,7 @@ export default function PoliceDashboard() {
                           placeholder="-123.1207"
                           value={filterLng}
                           onChange={(e) => setFilterLng(e.target.value)}
-                          className="h-8 text-xs bg-[hsl(240,15%,6%)] border-[hsl(220,15%,18%)] focus:border-[hsl(190,100%,50%)]"
+                          className="h-8 text-xs bg-[hsl(240,15%,6%)] border-[hsl(220,15%,18%)] focus:border-[hsl(350,100%,50%)]"
                         />
                       </div>
                     </div>
@@ -267,7 +267,7 @@ export default function PoliceDashboard() {
                       variant="outline"
                       size="sm"
                       onClick={useMyLocation}
-                      className="w-full h-8 text-xs border-[hsl(220,15%,18%)] bg-[hsl(240,15%,10%)] hover:bg-[hsl(240,15%,15%)] hover:border-[hsl(190,100%,50%)] transition-all duration-200"
+                      className="w-full h-8 text-xs border-[hsl(220,15%,18%)] bg-[hsl(240,15%,10%)] hover:bg-[hsl(240,15%,15%)] hover:border-[hsl(350,100%,50%)] transition-all duration-200"
                     >
                       <MapPin className="h-3 w-3 mr-1.5" />
                       Use My Location
@@ -292,7 +292,7 @@ export default function PoliceDashboard() {
                       size="sm"
                       onClick={() => setFilterEnabled(true)}
                       disabled={!filterLat || !filterLng}
-                      className="w-full h-8 text-xs bg-[hsl(190,100%,45%)] hover:bg-[hsl(190,100%,50%)] text-[hsl(240,15%,5%)] font-medium"
+                      className="w-full h-8 text-xs bg-[hsl(350,100%,45%)] hover:bg-[hsl(350,100%,50%)] text-white font-medium"
                     >
                       <SlidersHorizontal className="h-3 w-3 mr-1.5" />
                       Apply Filter
@@ -305,7 +305,7 @@ export default function PoliceDashboard() {
             {/* Stream Count */}
             <Badge
               variant="outline"
-              className={`h-8 px-2.5 gap-1.5 text-xs font-mono border-[hsl(220,15%,18%)] ${allStreams.length > 0 ? "text-[hsl(350,100%,60%)] border-[hsl(350,100%,50%)/0.4] shadow-[0_0_15px_-5px_hsl(350,100%,55%/0.5)]" : "text-[hsl(220,15%,45%)]"
+              className={`h-8 px-2.5 gap-1.5 text-xs font-mono border-[hsl(220,15%,18%)] ${allStreams.length > 0 ? "text-[hsl(350,100%,60%)] border-[hsl(350,100%,50%)]/40 shadow-[0_0_15px_-5px_hsl(350,100%,55%)]" : "text-[hsl(220,15%,45%)]"
                 }`}
             >
               <Video className="h-3 w-3" />
@@ -327,24 +327,12 @@ export default function PoliceDashboard() {
               )}
             </div>
 
-            {/* Home Link */}
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="h-8 w-8 p-0 text-[hsl(220,15%,50%)] hover:text-white hover:bg-[hsl(220,15%,15%)]"
-            >
-              <Link to="/">
-                <Home className="h-4 w-4" />
-              </Link>
-            </Button>
-
             {/* Logout Button */}
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="h-8 px-3 text-[hsl(220,15%,50%)] hover:text-[hsl(350,100%,60%)] hover:bg-[hsl(350,100%,50%)/0.1] gap-1.5 transition-all duration-200"
+              className="h-8 px-3 text-[hsl(220,15%,50%)] hover:text-[hsl(350,100%,60%)] hover:bg-[hsl(350,100%,50%)]/10 gap-1.5 transition-all duration-200"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="text-xs">Logout</span>
@@ -359,7 +347,7 @@ export default function PoliceDashboard() {
         <section className="animate-fade-in stagger-2">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(350,100%,50%)/0.15] border border-[hsl(350,100%,50%)/0.3]">
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(350,100%,50%)]/15 border border-[hsl(350,100%,50%)]/30">
                 <Video className="h-4 w-4 text-[hsl(350,100%,60%)]" />
                 {allStreams.length > 0 && (
                   <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[hsl(350,100%,55%)] animate-emergency-pulse" />
@@ -460,7 +448,7 @@ export default function PoliceDashboard() {
         {/* Past Streams Section */}
         <section className="animate-fade-in stagger-3">
           <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(190,100%,50%)/0.1] border border-[hsl(190,100%,50%)/0.25]">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(190,100%,50%)]/10 border border-[hsl(190,100%,50%)]/25">
               <Clock className="h-4 w-4 text-[hsl(190,100%,50%)]" />
             </div>
             <div>
@@ -478,14 +466,14 @@ export default function PoliceDashboard() {
               {pastStreams.map((stream, index) => (
                 <Card
                   key={stream.id}
-                  className={`group cursor-pointer overflow-hidden border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)] hover:border-[hsl(190,100%,50%)/0.3] hover:shadow-[0_0_30px_-10px_hsl(190,100%,50%/0.3)] transition-all duration-300 animate-fade-in stagger-${Math.min(index + 1, 8)}`}
+                  className={`group cursor-pointer overflow-hidden border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)] hover:border-[hsl(190,100%,50%)]/30 hover:shadow-[0_0_30px_-10px_hsl(190,100%,50%)] transition-all duration-300 animate-fade-in stagger-${Math.min(index + 1, 8)}`}
                   onClick={() => setSelectedPastStream(stream)}
                 >
                   <CardContent className="p-0">
                     {/* Thumbnail placeholder */}
                     <div className="relative aspect-video bg-[hsl(240,15%,8%)] flex items-center justify-center">
-                      <div className="absolute inset-0 flex items-center justify-center bg-[hsl(240,15%,5%)/0.8] group-hover:bg-[hsl(240,15%,5%)/0.6] transition-colors">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(190,100%,50%)/0.15] border border-[hsl(190,100%,50%)/0.3] group-hover:bg-[hsl(190,100%,50%)/0.25] transition-colors">
+                      <div className="absolute inset-0 flex items-center justify-center bg-[hsl(240,15%,5%)]/80 group-hover:bg-[hsl(240,15%,5%)]/60 transition-colors">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(190,100%,50%)]/15 border border-[hsl(190,100%,50%)]/30 group-hover:bg-[hsl(190,100%,50%)]/25 transition-colors">
                           <Play className="h-5 w-5 text-[hsl(190,100%,50%)]" />
                         </div>
                       </div>
@@ -513,7 +501,7 @@ export default function PoliceDashboard() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-[hsl(220,15%,40%)] hover:text-[hsl(350,100%,60%)] hover:bg-[hsl(350,100%,50%)/0.1] shrink-0 transition-all duration-200"
+                          className="h-7 w-7 text-[hsl(220,15%,40%)] hover:text-[hsl(350,100%,60%)] hover:bg-[hsl(350,100%,50%)]/10 shrink-0 transition-all duration-200"
                           onClick={(e) => {
                             e.stopPropagation();
                             setStreamToDelete(stream);
@@ -572,22 +560,22 @@ export default function PoliceDashboard() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!streamToDelete} onOpenChange={() => setStreamToDelete(null)}>
-        <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+        <AlertDialogContent className="bg-[hsl(240,15%,6%)] border-[hsl(220,15%,15%)] shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-zinc-100">Delete Recording?</AlertDialogTitle>
-            <AlertDialogDescription className="text-zinc-400">
+            <AlertDialogTitle className="text-white font-bold tracking-tight">Delete Recording?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[hsl(220,15%,55%)]">
               This will permanently delete the recording for stream{" "}
-              <span className="font-mono text-zinc-300">{streamToDelete?.id.substring(0, 12)}...</span>
+              <span className="font-mono text-[hsl(220,15%,75%)]">{streamToDelete?.id.substring(0, 12)}...</span>
               {" "}This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700">
+            <AlertDialogCancel className="bg-[hsl(240,15%,10%)] border-[hsl(220,15%,18%)] text-[hsl(220,15%,70%)] hover:bg-[hsl(240,15%,15%)] hover:text-white">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeletePastStream}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-[hsl(350,100%,50%)] hover:bg-[hsl(350,100%,55%)] text-white font-bold shadow-[0_0_20px_-5px_hsl(350,100%,55%)]"
             >
               Delete
             </AlertDialogAction>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, Mail, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,14 @@ export default function PoliceLogin() {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, isAuthenticated } = useAuth();
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/police', { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -53,7 +60,7 @@ export default function PoliceLogin() {
                 <div className="relative bg-[hsl(240,15%,6%)] backdrop-blur-xl border border-[hsl(220,15%,15%)] rounded-2xl shadow-[0_20px_60px_-15px_hsl(240,15%,0%)] p-8">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[hsl(190,100%,50%)] to-[hsl(190,100%,40%)] mb-4 shadow-[0_0_30px_-5px_hsl(190,100%,50%)]">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[hsl(350,100%,50%)] to-[hsl(350,100%,40%)] mb-4 shadow-[0_0_30px_-5px_hsl(350,100%,50%)]">
                             <Shield className="w-8 h-8 text-white" />
                         </div>
                         <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">Law Enforcement Access</h1>
@@ -62,7 +69,7 @@ export default function PoliceLogin() {
 
                     {/* Error message */}
                     {error && (
-                        <div className="mb-6 p-4 bg-[hsl(350,100%,50%)/0.1] border border-[hsl(350,100%,50%)/0.3] rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="mb-6 p-4 bg-[hsl(350,100%,50%)]/10 border border-[hsl(350,100%,50%)]/30 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                             <AlertCircle className="w-5 h-5 text-[hsl(350,100%,60%)] flex-shrink-0 mt-0.5" />
                             <p className="text-[hsl(350,100%,80%)] text-sm">{error}</p>
                         </div>
@@ -83,7 +90,7 @@ export default function PoliceLogin() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="officer@police.gov"
                                     required
-                                    className="pl-10 bg-[hsl(240,15%,8%)] border-[hsl(220,15%,18%)] text-white placeholder:text-[hsl(220,15%,35%)] focus:border-[hsl(190,100%,50%)] focus:ring-[hsl(190,100%,50%)/0.2] h-12 transition-all duration-200"
+                                    className="pl-10 bg-[hsl(240,15%,8%)] border-[hsl(220,15%,18%)] text-white placeholder:text-[hsl(220,15%,35%)] focus:border-[hsl(350,100%,50%)] focus:ring-1 focus:ring-[hsl(350,100%,50%)]/20 h-12 transition-all duration-200"
                                 />
                             </div>
                         </div>
@@ -101,7 +108,7 @@ export default function PoliceLogin() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter your password"
                                     required
-                                    className="pl-10 bg-[hsl(240,15%,8%)] border-[hsl(220,15%,18%)] text-white placeholder:text-[hsl(220,15%,35%)] focus:border-[hsl(190,100%,50%)] focus:ring-[hsl(190,100%,50%)/0.2] h-12 transition-all duration-200"
+                                    className="pl-10 bg-[hsl(240,15%,8%)] border-[hsl(220,15%,18%)] text-white placeholder:text-[hsl(220,15%,35%)] focus:border-[hsl(350,100%,50%)] focus:ring-1 focus:ring-[hsl(350,100%,50%)]/20 h-12 transition-all duration-200"
                                 />
                             </div>
                         </div>
@@ -109,11 +116,11 @@ export default function PoliceLogin() {
                         <Button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full h-12 bg-gradient-to-r from-[hsl(190,100%,45%)] to-[hsl(190,100%,40%)] hover:from-[hsl(190,100%,50%)] hover:to-[hsl(190,100%,45%)] text-[hsl(240,15%,5%)] font-bold shadow-[0_0_30px_-5px_hsl(190,100%,50%)] hover:shadow-[0_0_40px_-5px_hsl(190,100%,55%)] transition-all duration-300"
+                            className="w-full h-12 bg-gradient-to-r from-[hsl(350,100%,45%)] to-[hsl(350,100%,40%)] hover:from-[hsl(350,100%,50%)] hover:to-[hsl(350,100%,45%)] text-white font-bold shadow-[0_0_30px_-5px_hsl(350,100%,50%)] hover:shadow-[0_0_40px_-5px_hsl(350,100%,55%)] transition-all duration-300"
                         >
                             {isLoading ? (
                                 <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 border-2 border-[hsl(240,15%,5%)/0.3] border-t-[hsl(240,15%,5%)] rounded-full animate-spin" />
+                                <div className="w-5 h-5 border-2 border-[hsl(240,15%,5%)]/30 border-t-[hsl(240,15%,5%)] rounded-full animate-spin" />
                                     <span>Authenticating...</span>
                                 </div>
                             ) : (
