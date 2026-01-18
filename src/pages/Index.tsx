@@ -9,7 +9,7 @@ export default function Index() {
       <header className="relative overflow-hidden">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-red-950/20 via-zinc-950 to-blue-950/20" />
-        
+
         {/* Nav */}
         <nav className="relative z-10 flex items-center justify-between border-b border-zinc-800 px-6 py-4 lg:px-12">
           <div className="flex items-center gap-2">
@@ -20,7 +20,7 @@ export default function Index() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild className="text-zinc-400 hover:text-white hover:bg-zinc-800">
-              <Link to="/police">Police Dashboard</Link>
+              <Link to="/police/login">Police Dashboard</Link>
             </Button>
           </div>
         </nav>
