@@ -78,7 +78,7 @@ export default function Index() {
             <div className="absolute inset-0 rounded-xl bg-[hsl(350,100%,55%)] blur-lg opacity-50" />
             <Shield className="relative h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight">SafeStream</span>
+          <span className="text-xl font-bold tracking-tight">EmergencyEye</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-2 text-sm text-[hsl(220,15%,50%)]">

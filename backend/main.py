@@ -1,5 +1,5 @@
 """
-WebRTC Signaling Server for SafeStream
+WebRTC Signaling Server for EmergencyEye
 Handles WebSocket connections for WebRTC peer connection signaling.
 Also handles video recording storage and retrieval.
 Includes AI Sentry for threat detection using Gemini.
@@ -46,7 +46,7 @@ if not model and OPENROUTER_API_KEY:
 elif not model and not OPENROUTER_API_KEY:
     print("[AI Sentry] No AI provider configured - AI features disabled")
 
-app = FastAPI(title="SafeStream Signaling Server")
+app = FastAPI(title="EmergencyEye Signaling Server")
 
 # Create recordings directory
 RECORDINGS_DIR = Path(__file__).parent / "recordings"
@@ -120,7 +120,7 @@ async def broadcast_stream_list():
 
 @app.get("/")
 async def root():
-    return {"status": "ok", "service": "SafeStream Signaling Server"}
+    return {"status": "ok", "service": "EmergencyEye Signaling Server"}
 
 
 @app.get("/streams")

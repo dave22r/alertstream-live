@@ -77,7 +77,7 @@ export default function StreamPage() {
             <div className="absolute inset-0 rounded-xl bg-[hsl(350,100%,55%)] blur-md opacity-40" />
             <Shield className="relative h-5 w-5 text-white" />
           </div>
-          <span className="text-lg font-bold text-white tracking-tight">SafeStream</span>
+          <span className="text-lg font-bold text-white tracking-tight">EmergencyEye</span>
         </div>
         <Button
           variant="ghost"
