@@ -6,7 +6,7 @@ const getSignalingServer = () => {
   
   // In production, use the Render backend
   if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
-    return "wss://alertstream-live-backend.onrender.com";
+    return "wss://alertstream-live-l6vr.onrender.com";
   }
   
   return "ws://localhost:10000";
