@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Shield, Radio, Eye, ArrowRight, Zap, Lock, MapPin } from "lucide-react";
+import { Shield, Radio, ArrowRight, Zap, Lock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Index() {
@@ -117,51 +117,6 @@ export default function Index() {
           </div>
         </div>
       </section>
-
-      {/* Demo Section */}
-      <section className="py-20">
-        <div className="mx-auto max-w-4xl px-6 text-center lg:px-12">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 lg:p-12">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600/10 border border-blue-500/20">
-              <Eye className="h-8 w-8 text-blue-500" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">Try the Demo</h2>
-            <p className="mx-auto mt-3 max-w-md text-zinc-400">
-              Experience both perspectives: start a stream as a caller, or view
-              incoming streams as an officer.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button size="lg" asChild className="h-11 px-5 bg-red-600 hover:bg-red-700 text-white font-medium gap-2">
-                <Link to="/stream">
-                  <Radio className="h-4 w-4" />
-                  Open Streamer View
-                </Link>
-              </Button>
-              <Button size="lg" asChild className="h-11 px-5 bg-zinc-700 hover:bg-zinc-600 text-white font-medium gap-2">
-                <Link to="/police">
-                  <Shield className="h-4 w-4" />
-                  Open Police Dashboard
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-zinc-800 py-8">
-        <div className="mx-auto max-w-6xl px-6 lg:px-12">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center gap-2 text-sm text-zinc-500">
-              <Shield className="h-4 w-4" />
-              <span>SafeStream — Emergency Situational Awareness</span>
-            </div>
-            <p className="text-sm text-zinc-500">
-              Built for nwHacks 2025
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
