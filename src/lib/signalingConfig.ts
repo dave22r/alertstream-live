@@ -18,13 +18,9 @@ export const rtcConfig: RTCConfiguration = {
     // Google STUN servers (free, reliable for simple NAT)
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-<<<<<<< Updated upstream
-    // OpenRelay (Free Tier) - reliable for demos
-=======
     { urls: "stun:stun2.l.google.com:19302" },
     // OpenRelay TURN servers (free public TURN - for production use dedicated TURN)
     // These provide relay fallback when direct P2P connection fails (symmetric NAT, firewalls)
->>>>>>> Stashed changes
     {
       urls: "turn:openrelay.metered.ca:80",
       username: "openrelayproject",
