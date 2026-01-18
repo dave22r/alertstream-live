@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { MapPin, Clock, Square, AlertCircle, Wifi, WifiOff, Circle, Shield } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { MapPin, Clock, Square, AlertCircle, Wifi, WifiOff, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LiveIndicator } from "@/components/LiveIndicator";
 import { useBroadcaster } from "@/hooks/useBroadcaster";
 import { Badge } from "@/components/ui/badge";
-import { signalingConfig } from "@/lib/signalingConfig";
 
 interface StreamingViewProps {
   stream: MediaStream | null;
@@ -24,10 +23,7 @@ export function StreamingView({
   error,
 }: StreamingViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [duration, setDuration] = useState(0);
-  const [aiSentryStatus, setAiSentryStatus] = useState<"pending" | "analyzing" | "clear" | "alert">("pending");
-  const frameAnalyzedRef = useRef(false);
 
   const {
     isBroadcasting,
@@ -59,79 +55,9 @@ export function StreamingView({
     }
   }, [location, isBroadcasting, updateLocation]);
 
-  // AI Sentry - Capture and analyze frame at 15 seconds
-  const captureAndAnalyzeFrame = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || frameAnalyzedRef.current) return;
-    
-    frameAnalyzedRef.current = true;
-    setAiSentryStatus("analyzing");
-    
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    
-    // Set canvas size to video dimensions
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    
-    // Draw current video frame to canvas
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // Convert to blob
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        setAiSentryStatus("clear");
-        return;
-      }
-      
-      try {
-        const formData = new FormData();
-        formData.append("stream_id", streamId);
-        formData.append("latitude", String(location?.latitude || 0));
-        formData.append("longitude", String(location?.longitude || 0));
-        formData.append("frame", blob, "frame.jpg");
-        
-        console.log("[AI Sentry] Sending frame to backend for analysis...");
-        
-        const response = await fetch(`${signalingConfig.httpBase}/analyze-frame`, {
-          method: "POST",
-          body: formData,
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log("[AI Sentry] Analysis result:", data);
-          setAiSentryStatus(data.threat_detected ? "alert" : "clear");
-        } else {
-          console.error("[AI Sentry] Analysis request failed:", response.status);
-          setAiSentryStatus("clear");
-        }
-      } catch (error) {
-        console.error("AI Sentry analysis failed:", error);
-        setAiSentryStatus("clear");
-      }
-    }, "image/jpeg", 0.8);
-  }, [streamId, location]);
-
-  // Trigger AI analysis at 5 seconds (for testing - change to 15 for production)
-  useEffect(() => {
-    if (duration === 5 && isBroadcasting && !frameAnalyzedRef.current) {
-      console.log("[AI Sentry] Triggering frame capture and analysis...");
-      captureAndAnalyzeFrame();
-    }
-  }, [duration, isBroadcasting, captureAndAnalyzeFrame]);
-
   useEffect(() => {
     if (videoRef.current && stream) {
-      console.log(`[StreamingView] Setting local stream, tracks:`, stream.getTracks().length);
-      stream.getTracks().forEach(track => {
-        console.log(`[StreamingView] Local track: ${track.kind}, enabled: ${track.enabled}, readyState: ${track.readyState}`);
-      });
       videoRef.current.srcObject = stream;
-      videoRef.current.muted = true;
-      videoRef.current.play().catch(err => console.error('[StreamingView] Play error:', err));
     }
   }, [stream]);
 
@@ -155,9 +81,6 @@ export function StreamingView({
 
   return (
     <div className="relative flex h-screen w-full flex-col bg-black">
-      {/* Hidden canvas for frame capture */}
-      <canvas ref={canvasRef} className="hidden" />
-      
       {/* Video feed - full screen */}
       <div className="relative flex-1">
         <video
@@ -190,19 +113,6 @@ export function StreamingView({
               <Badge className="bg-[hsl(350,100%,55%)]/20 text-[hsl(350,100%,60%)] border border-[hsl(350,100%,55%)]/40 gap-1.5 backdrop-blur-sm">
                 <Circle className="h-2.5 w-2.5 fill-[hsl(350,100%,55%)]" />
                 Recording
-              </Badge>
-            )}
-            {/* AI Sentry Status */}
-            {aiSentryStatus === "analyzing" && (
-              <Badge className="bg-[hsl(35,100%,50%)]/20 text-[hsl(35,100%,55%)] border border-[hsl(35,100%,50%)]/40 gap-1.5 backdrop-blur-sm animate-pulse">
-                <Shield className="h-3 w-3" />
-                AI Scanning...
-              </Badge>
-            )}
-            {aiSentryStatus === "clear" && (
-              <Badge className="bg-[hsl(160,100%,45%)]/20 text-[hsl(160,100%,50%)] border border-[hsl(160,100%,45%)]/40 gap-1.5 backdrop-blur-sm">
-                <Shield className="h-3 w-3" />
-                AI Clear
               </Badge>
             )}
           </div>

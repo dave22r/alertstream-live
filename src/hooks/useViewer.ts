@@ -36,83 +36,60 @@ export function useViewer({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (message: any) => {
       switch (message.type) {
-        case "offer": {
-          console.log("[Viewer] Received offer from broadcaster");
-          
-          // Close existing peer connection if any
-          if (pcRef.current) {
-            try {
-              pcRef.current.close();
-            } catch (e) {
-              console.error("[Viewer] Error closing existing PC:", e);
-            }
-            pcRef.current = null;
+        case "offer":
+          console.log("[Viewer] Received offer");
+          if (!pcRef.current) {
+            const pc = new RTCPeerConnection(rtcConfig);
+            pcRef.current = pc;
+
+            // Handle incoming tracks
+            pc.ontrack = (event) => {
+              console.log("[Viewer] Received track:", event.track.kind);
+              const stream = event.streams[0];
+              if (stream) {
+                setRemoteStream(stream);
+                setIsReceiving(true);
+                onStreamReady?.(stream);
+              }
+            };
+
+            // Handle ICE candidates
+            pc.onicecandidate = (event) => {
+              if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+                wsRef.current.send(
+                  JSON.stringify({
+                    type: "ice_candidate",
+                    candidate: event.candidate,
+                  })
+                );
+              }
+            };
+
+            pc.onconnectionstatechange = () => {
+              console.log("[Viewer] Connection state:", pc.connectionState);
+              if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+                setIsReceiving(false);
+              }
+            };
           }
-          
-          const pc = new RTCPeerConnection(rtcConfig);
-          pcRef.current = pc;
-
-          // Handle incoming tracks - THIS IS WHERE VIDEO COMES IN
-          pc.ontrack = (event) => {
-            console.log("[Viewer] TRACK RECEIVED:", event.track.kind);
-            const stream = event.streams[0];
-            if (stream) {
-              console.log("[Viewer] Stream has", stream.getTracks().length, "tracks");
-              setRemoteStream(stream);
-              setIsReceiving(true);
-              onStreamReady?.(stream);
-            } else {
-              console.error("[Viewer] No stream in track event");
-            }
-          };
-
-          // Handle ICE candidates
-          pc.onicecandidate = (event) => {
-            if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
-              wsRef.current.send(
-                JSON.stringify({
-                  type: "ice_candidate",
-                  candidate: event.candidate,
-                })
-              );
-            }
-          };
-
-          pc.oniceconnectionstatechange = () => {
-            console.log("[Viewer] ICE state:", pc.iceConnectionState);
-            if (pc.iceConnectionState === "failed") {
-              console.error("[Viewer] ICE FAILED");
-              setError("Connection failed");
-              setIsReceiving(false);
-            }
-          };
-
-          pc.onconnectionstatechange = () => {
-            console.log("[Viewer] Connection state:", pc.connectionState);
-            if (pc.connectionState === "failed") {
-              setIsReceiving(false);
-              setError("Stream connection failed");
-            }
-          };
 
           try {
-            await pc.setRemoteDescription(new RTCSessionDescription(message.sdp));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
+            await pcRef.current!.setRemoteDescription(new RTCSessionDescription(message.sdp));
+            const answer = await pcRef.current!.createAnswer();
+            await pcRef.current!.setLocalDescription(answer);
 
             wsRef.current?.send(
               JSON.stringify({
                 type: "answer",
-                sdp: pc.localDescription,
+                sdp: pcRef.current!.localDescription,
               })
             );
-            console.log("[Viewer] Answer sent");
           } catch (err) {
             console.error("[Viewer] Failed to handle offer:", err);
             setError("Failed to establish connection");
           }
           break;
-        }
+
         case "ice_candidate":
           if (pcRef.current && message.candidate) {
             try {
@@ -145,10 +122,9 @@ export function useViewer({
       return;
     }
 
-    isCleanupRef.current = false;
-
     // Close existing connections if any
     if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+      console.log("[Viewer] Closing existing connection before connecting");
       try {
         wsRef.current.close();
       } catch (err) {
@@ -157,12 +133,11 @@ export function useViewer({
     }
 
     try {
-      console.log("[Viewer] Connecting to:", signalingConfig.viewWs(streamId));
       const ws = new WebSocket(signalingConfig.viewWs(streamId));
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("[Viewer] WebSocket connected");
+        console.log("[Viewer] Connected to signaling server");
         setIsConnected(true);
         setError(null);
         reconnectAttemptsRef.current = 0;
@@ -173,7 +148,7 @@ export function useViewer({
           const message = JSON.parse(event.data);
           handleSignalingMessage(message);
         } catch (err) {
-          console.error("[Viewer] Failed to parse message:", err);
+          console.error("[Viewer] Failed to parse message:", err, "Data:", event.data);
         }
       };
 
@@ -183,14 +158,14 @@ export function useViewer({
       };
 
       ws.onclose = () => {
-        console.log("[Viewer] WebSocket disconnected");
+        console.log("[Viewer] Disconnected from signaling server");
         setIsConnected(false);
         setIsReceiving(false);
         
         // Attempt reconnection if not intentional cleanup
         if (!isCleanupRef.current && reconnectAttemptsRef.current < 5) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
-          console.log(`[Viewer] Reconnecting in ${delay}ms`);
+          console.log(`[Viewer] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1}/5)`);
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
             connect();
@@ -210,6 +185,7 @@ export function useViewer({
   const disconnect = useCallback(() => {
     isCleanupRef.current = true;
     
+    // Clear any pending reconnection
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
@@ -238,6 +214,11 @@ export function useViewer({
     setIsReceiving(false);
     setIsConnected(false);
     setError(null);
+    
+    // Reset cleanup flag after a short delay
+    setTimeout(() => {
+      isCleanupRef.current = false;
+    }, 100);
   }, []);
 
   // Cleanup on unmount
