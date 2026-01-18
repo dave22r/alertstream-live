@@ -20,7 +20,7 @@ interface StreamCardLiveProps {
 
 export function StreamCardLive({ stream, duration, onClick }: StreamCardLiveProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  
+
   const { remoteStream, isReceiving, connect, disconnect } = useViewer({
     streamId: stream.id,
   });
@@ -81,14 +81,6 @@ export function StreamCardLive({ stream, duration, onClick }: StreamCardLiveProp
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
               </span>
               LIVE
-            </Badge>
-          </div>
-
-          {/* Duration */}
-          <div className="absolute right-2 top-2">
-            <Badge className="bg-[hsl(240,15%,8%)]/90 text-white text-[10px] font-mono px-1.5 py-0.5 border border-[hsl(220,15%,20%)]/50 backdrop-blur-sm">
-              <Clock className="h-2.5 w-2.5 mr-1 text-[hsl(220,15%,50%)]" />
-              {formatDuration(duration)}
             </Badge>
           </div>
 

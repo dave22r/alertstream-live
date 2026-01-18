@@ -16,6 +16,7 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const hasFitBoundsRef = useRef<boolean>(false);
   const [selectedStream, setSelectedStream] = useState<StreamData | null>(null);
 
   const formatDuration = (seconds: number) => {
@@ -94,23 +95,26 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
 
     // Add markers
     validStreams.forEach((stream) => {
-      const marker = L.marker([stream.latitude, stream.longitude], { 
+      const marker = L.marker([stream.latitude, stream.longitude], {
         icon: redIcon,
       }).addTo(map);
-      
+
       marker.on("click", () => {
         setSelectedStream(stream);
       });
-      
+
       markersRef.current.push(marker);
     });
 
-    // Fit bounds if we have streams
-    if (validStreams.length === 1) {
-      map.setView([validStreams[0].latitude, validStreams[0].longitude], 14);
-    } else if (validStreams.length > 1) {
-      const bounds = L.latLngBounds(validStreams.map((s) => [s.latitude, s.longitude] as [number, number]));
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+    // Fit bounds only on first load when we have streams
+    if (!hasFitBoundsRef.current && validStreams.length > 0) {
+      if (validStreams.length === 1) {
+        map.setView([validStreams[0].latitude, validStreams[0].longitude], 14);
+      } else {
+        const bounds = L.latLngBounds(validStreams.map((s) => [s.latitude, s.longitude] as [number, number]));
+        map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+      }
+      hasFitBoundsRef.current = true;
     }
   }, [validStreams]);
 
@@ -134,7 +138,7 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
     <div className="relative rounded-xl border border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)] overflow-hidden">
       {/* Map Container - sits at the bottom */}
       <div ref={mapRef} className="h-[600px] w-full" style={{ position: 'relative', zIndex: 1 }} />
-      
+
       {/* Overlay Container - sits above map */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 2 }}>
         {/* Selected Stream Panel */}
@@ -163,12 +167,8 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              
+
               <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-xs text-[hsl(220,15%,55%)]">
-                  <Clock className="h-3 w-3 text-[hsl(190,100%,50%)]" />
-                  <span className="font-mono">{formatDuration(durations[selectedStream.id] || 0)}</span>
-                </div>
                 <div className="flex items-center gap-2 text-xs text-[hsl(220,15%,55%)]">
                   <Navigation className="h-3 w-3 text-[hsl(350,100%,60%)]" />
                   <span className="font-mono">
@@ -181,7 +181,7 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
                   </p>
                 )}
               </div>
-              
+
               <Button
                 size="sm"
                 className="w-full h-10 bg-gradient-to-r from-[hsl(350,100%,50%)] to-[hsl(350,100%,45%)] hover:from-[hsl(350,100%,55%)] hover:to-[hsl(350,100%,50%)] text-white gap-2 font-medium shadow-[0_0_20px_-5px_hsl(350,100%,55%)] transition-all duration-300"
@@ -193,7 +193,7 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
             </div>
           </div>
         )}
-        
+
         {/* Legend */}
         <div className="absolute bottom-4 right-4 bg-[hsl(240,15%,8%)] border border-[hsl(220,15%,18%)] rounded-lg px-3 py-2 pointer-events-auto">
           <div className="flex items-center gap-3">
@@ -206,7 +206,7 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
             </span>
           </div>
         </div>
-        
+
         {/* Instructions */}
         <div className="absolute top-4 left-4 bg-[hsl(240,15%,8%)] border border-[hsl(220,15%,18%)] rounded-lg px-3 py-2 pointer-events-auto">
           <div className="flex items-center gap-2 text-xs text-[hsl(220,15%,55%)]">
@@ -214,7 +214,7 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
             <span>Click pins • Drag to pan • Scroll to zoom</span>
           </div>
         </div>
-        
+
         {/* Streams without location */}
         {streams.length > validStreams.length && (
           <div className="absolute top-4 right-4 bg-[hsl(35,100%,50%)]/15 border border-[hsl(35,100%,50%)]/30 rounded-lg px-3 py-2 pointer-events-auto">

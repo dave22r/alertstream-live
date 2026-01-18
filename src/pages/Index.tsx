@@ -85,9 +85,9 @@ export default function Index() {
             <Signal className="h-3.5 w-3.5 text-[hsl(160,100%,45%)]" />
             <span>System Operational</span>
           </div>
-          <Button 
-            variant="ghost" 
-            asChild 
+          <Button
+            variant="ghost"
+            asChild
             className="text-[hsl(220,15%,60%)] hover:text-white hover:bg-[hsl(220,15%,12%)] border border-transparent hover:border-[hsl(220,15%,20%)] transition-all duration-300"
           >
             <Link to="/police/login">
@@ -100,12 +100,6 @@ export default function Index() {
 
       {/* Hero content */}
       <div className="relative z-10 mx-auto max-w-5xl px-6 pt-20 pb-32 text-center lg:px-12 lg:pt-32">
-        {/* Badge */}
-        <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-[hsl(220,15%,18%)] bg-[hsl(240,15%,6%)] px-5 py-2 text-sm animate-fade-in stagger-1">
-          <Zap className="h-4 w-4 text-[hsl(35,100%,55%)]" />
-          <span className="text-[hsl(220,15%,70%)]">Zero-friction emergency response</span>
-        </div>
-
         {/* Title */}
         <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl animate-fade-in stagger-2">
           <span className="text-white">Real-time situational</span>
@@ -123,8 +117,8 @@ export default function Index() {
 
         {/* CTA */}
         <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row animate-fade-in stagger-4">
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             onClick={handleStartClick}
             className="relative h-14 px-8 bg-gradient-to-r from-[hsl(350,100%,50%)] to-[hsl(350,100%,45%)] hover:from-[hsl(350,100%,55%)] hover:to-[hsl(350,100%,50%)] text-white font-semibold text-base gap-3 border-0 shadow-[0_0_40px_-10px_hsl(350,100%,55%)] hover:shadow-[0_0_60px_-10px_hsl(350,100%,60%)] transition-all duration-300 group"
           >

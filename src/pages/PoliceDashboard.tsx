@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Activity,
+  Shield,
   Signal,
   SignalZero,
   MapPin,
@@ -200,7 +200,7 @@ export default function PoliceDashboard() {
               <div className="relative flex h-9 w-9 items-center justify-center">
                 <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[hsl(350,100%,55%)] to-[hsl(350,100%,40%)]" />
                 <div className="absolute inset-0 rounded-lg bg-[hsl(350,100%,55%)] blur-md opacity-40" />
-                <Activity className="relative h-4 w-4 text-white" />
+                <Shield className="relative h-4 w-4 text-white" />
               </div>
               <div>
                 <h1 className="text-sm font-bold text-white tracking-tight">Command Center</h1>
@@ -370,8 +370,8 @@ export default function PoliceDashboard() {
                 size="sm"
                 onClick={() => setViewMode("grid")}
                 className={`h-8 px-3 gap-1.5 text-xs transition-all duration-200 ${viewMode === "grid"
-                    ? "bg-[hsl(240,15%,15%)] text-white"
-                    : "text-[hsl(220,15%,50%)] hover:text-white"
+                  ? "bg-[hsl(240,15%,15%)] text-white"
+                  : "text-[hsl(220,15%,50%)] hover:text-white"
                   }`}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
@@ -382,8 +382,8 @@ export default function PoliceDashboard() {
                 size="sm"
                 onClick={() => setViewMode("map")}
                 className={`h-8 px-3 gap-1.5 text-xs transition-all duration-200 ${viewMode === "map"
-                    ? "bg-[hsl(240,15%,15%)] text-white"
-                    : "text-[hsl(220,15%,50%)] hover:text-white"
+                  ? "bg-[hsl(240,15%,15%)] text-white"
+                  : "text-[hsl(220,15%,50%)] hover:text-white"
                   }`}
               >
                 <Map className="h-3.5 w-3.5" />
