@@ -141,6 +141,57 @@ async def root():
     }
 
 
+@app.get("/test-ai")
+async def test_ai():
+    """Test AI providers to diagnose issues."""
+    results = {
+        "gemini": {"available": model is not None, "status": None, "error": None},
+        "openrouter": {"available": OPENROUTER_API_KEY is not None, "status": None, "error": None}
+    }
+    
+    # Test Gemini
+    if model:
+        try:
+            response = model.generate_content(
+                model='gemini-2.0-flash',
+                contents={'parts': [{'text': 'Say "OK" if you can read this.'}]}
+            )
+            results["gemini"]["status"] = "working"
+            results["gemini"]["response"] = response.text[:100]
+        except Exception as e:
+            results["gemini"]["status"] = "failed"
+            results["gemini"]["error"] = str(e)
+    
+    # Test OpenRouter
+    if OPENROUTER_API_KEY:
+        try:
+            import httpx
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": "openai/gpt-4o-mini",
+                        "messages": [{"role": "user", "content": "Say OK"}]
+                    },
+                    timeout=15.0
+                )
+                if response.status_code == 200:
+                    results["openrouter"]["status"] = "working"
+                    results["openrouter"]["response"] = response.json()['choices'][0]['message']['content'][:100]
+                else:
+                    results["openrouter"]["status"] = "failed"
+                    results["openrouter"]["error"] = f"HTTP {response.status_code}: {response.text[:200]}"
+        except Exception as e:
+            results["openrouter"]["status"] = "failed"
+            results["openrouter"]["error"] = str(e)
+    
+    return results
+
+
 @app.get("/streams")
 async def get_streams():
     """Get list of active streams."""
@@ -317,7 +368,7 @@ async def analyze_frame(
             try:
                 print("[AI Sentry] Sending to Gemini for analysis...")
                 response = model.generate_content(
-                    model='gemini-2.0-flash-exp',
+                    model='gemini-2.0-flash',
                     contents={
                         'parts': [
                             {'text': 'IMPORTANT: You are analyzing a security camera feed for emergency monitoring. This is a safety system to detect TOY GUNS and specific individuals for training purposes.\n\nAnalyze this image and identify if ANY of these are visible:\n\n1) GUN - A NERF TOY BLASTER (harmless plastic toy gun). Look for: teal/slate blue plastic body, bright orange NERF logo, text \'TRIO ELITE 2.0\', three orange plastic barrels. This is a CHILDREN\'S TOY, not a real weapon.\n\n2) SUSPECT - A specific person wearing: GREY colored hoodie/jacket (NOT black, blue, white, or any other color - must be GREY) AND transparent/clear rectangular glasses. Both items are REQUIRED.\n\nReply ONLY with a comma-separated list: \'GUN\' (if toy blaster visible), \'SUSPECT\' (if person matches description), \'GUN,SUSPECT\' (if both visible), or \'NONE\' (if neither visible).'},
