@@ -141,6 +141,7 @@ export function useBroadcaster({
       // Add media tracks to the connection
       if (mediaStream) {
         mediaStream.getTracks().forEach((track) => {
+          console.log(`[Broadcaster] Adding track to PC for ${viewerId}:`, track.kind, track.readyState);
           pc.addTrack(track, mediaStream);
         });
       }
@@ -148,6 +149,7 @@ export function useBroadcaster({
       // Handle ICE candidates
       pc.onicecandidate = (event) => {
         if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+          console.log(`[Broadcaster] Sending ICE candidate to ${viewerId}:`, event.candidate.type || "unknown");
           wsRef.current.send(
             JSON.stringify({
               type: "ice_candidate",
@@ -158,8 +160,30 @@ export function useBroadcaster({
         }
       };
 
+      // Monitor ICE gathering state
+      pc.onicegatheringstatechange = () => {
+        console.log(`[Broadcaster] ICE gathering state for ${viewerId}:`, pc.iceGatheringState);
+      };
+
+      // Monitor ICE connection state (critical for debugging)
+      pc.oniceconnectionstatechange = () => {
+        console.log(`[Broadcaster] ICE connection state for ${viewerId}:`, pc.iceConnectionState);
+        if (pc.iceConnectionState === "failed") {
+          console.error(`[Broadcaster] ICE connection FAILED for ${viewerId} - closing and removing`);
+          pc.close();
+          peerConnectionsRef.current.delete(viewerId);
+        } else if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
+          console.log(`[Broadcaster] ICE connected successfully for ${viewerId}`);
+        }
+      };
+
       pc.onconnectionstatechange = () => {
         console.log(`[Broadcaster] Connection state for ${viewerId}:`, pc.connectionState);
+        if (pc.connectionState === "failed") {
+          console.error(`[Broadcaster] Peer connection FAILED for ${viewerId}`);
+          pc.close();
+          peerConnectionsRef.current.delete(viewerId);
+        }
       };
 
       peerConnectionsRef.current.set(viewerId, pc);

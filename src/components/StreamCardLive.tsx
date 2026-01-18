@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { Clock, MapPin, Expand, Video } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Clock, MapPin, Expand, Video, AlertTriangle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useViewer } from "@/hooks/useViewer";
 
@@ -21,8 +21,9 @@ interface StreamCardLiveProps {
 
 export function StreamCardLive({ stream, duration, onClick, highlighted }: StreamCardLiveProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
 
-  const { remoteStream, isReceiving, connect, disconnect } = useViewer({
+  const { remoteStream, isReceiving, isConnected, error, connect, disconnect } = useViewer({
     streamId: stream.id,
   });
 
@@ -31,6 +32,18 @@ export function StreamCardLive({ stream, duration, onClick, highlighted }: Strea
     return () => disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stream.id]);
+
+  // Track connection attempts for UI feedback
+  useEffect(() => {
+    if (!isReceiving && isConnected) {
+      const timer = setInterval(() => {
+        setConnectionAttempts(prev => prev + 1);
+      }, 3000);
+      return () => clearInterval(timer);
+    } else if (isReceiving) {
+      setConnectionAttempts(0);
+    }
+  }, [isReceiving, isConnected]);
 
   useEffect(() => {
     if (videoRef.current && remoteStream) {
@@ -47,6 +60,14 @@ export function StreamCardLive({ stream, duration, onClick, highlighted }: Strea
   const formatCoords = (lat: number, lng: number) => {
     if (lat === 0 && lng === 0) return "Acquiring...";
     return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  };
+
+  // Determine connection status message
+  const getConnectionStatus = () => {
+    if (error) return { text: "Connection failed", isError: true };
+    if (!isConnected) return { text: "Connecting to server...", isError: false };
+    if (connectionAttempts > 2) return { text: "Establishing P2P...", isError: false };
+    return { text: "Connecting...", isError: false };
   };
 
   return (
@@ -71,10 +92,26 @@ export function StreamCardLive({ stream, duration, onClick, highlighted }: Strea
             />
           ) : (
             <div className="h-full w-full flex items-center justify-center bg-[hsl(240,15%,4%)]">
-              <div className="text-center">
-                <Video className="mx-auto h-8 w-8 text-[hsl(220,15%,25%)] mb-2" />
-                <p className="text-xs text-[hsl(220,15%,40%)]">Connecting...</p>
-              </div>
+              {(() => {
+                const status = getConnectionStatus();
+                return (
+                  <div className="text-center px-4">
+                    {status.isError ? (
+                      <AlertTriangle className="mx-auto h-8 w-8 text-amber-500 mb-2" />
+                    ) : (
+                      <Loader2 className="mx-auto h-8 w-8 text-[hsl(220,15%,35%)] mb-2 animate-spin" />
+                    )}
+                    <p className={`text-xs ${status.isError ? 'text-amber-500' : 'text-[hsl(220,15%,40%)]'}`}>
+                      {status.text}
+                    </p>
+                    {connectionAttempts > 3 && !status.isError && (
+                      <p className="text-[10px] text-[hsl(220,15%,30%)] mt-1">
+                        Network may be slow
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 

@@ -23,12 +23,21 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Initialize Gemini
-import google.generativeai as genai
-
+# Initialize Gemini - with graceful fallback if not available
+genai = None
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+    try:
+        import google.generativeai as genai_module
+        genai_module.configure(api_key=GEMINI_API_KEY)
+        genai = genai_module
+        print("[AI Sentry] Gemini AI initialized successfully")
+    except ImportError:
+        print("[AI Sentry] WARNING: google-generativeai package not installed, AI features disabled")
+    except Exception as e:
+        print(f"[AI Sentry] WARNING: Failed to initialize Gemini: {e}")
+else:
+    print("[AI Sentry] No GEMINI_API_KEY set, AI features disabled")
 
 app = FastAPI(title="SafeStream Signaling Server")
 
@@ -224,8 +233,8 @@ async def analyze_frame(
     """Analyze a video frame for threats using Gemini AI."""
     print(f"[AI Sentry] Received frame analysis request for stream: {stream_id}")
     
-    if not GEMINI_API_KEY:
-        print("[AI Sentry] ERROR: Gemini API key not configured")
+    if not genai or not GEMINI_API_KEY:
+        print("[AI Sentry] ERROR: Gemini AI not available")
         raise HTTPException(status_code=503, detail="Gemini AI not configured")
     
     try:

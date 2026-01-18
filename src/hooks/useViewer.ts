@@ -31,59 +31,139 @@ export function useViewer({
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isCleanupRef = useRef(false);
+  const iceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear ICE/connection timeouts
+  const clearConnectionTimeouts = useCallback(() => {
+    if (iceTimeoutRef.current) {
+      clearTimeout(iceTimeoutRef.current);
+      iceTimeoutRef.current = null;
+    }
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
+  }, []);
 
   const handleSignalingMessage = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (message: any) => {
       switch (message.type) {
         case "offer":
-          console.log("[Viewer] Received offer");
-          if (!pcRef.current) {
-            const pc = new RTCPeerConnection(rtcConfig);
-            pcRef.current = pc;
-
-            // Handle incoming tracks
-            pc.ontrack = (event) => {
-              console.log("[Viewer] Received track:", event.track.kind);
-              const stream = event.streams[0];
-              if (stream) {
-                setRemoteStream(stream);
-                setIsReceiving(true);
-                onStreamReady?.(stream);
-              }
-            };
-
-            // Handle ICE candidates
-            pc.onicecandidate = (event) => {
-              if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
-                wsRef.current.send(
-                  JSON.stringify({
-                    type: "ice_candidate",
-                    candidate: event.candidate,
-                  })
-                );
-              }
-            };
-
-            pc.onconnectionstatechange = () => {
-              console.log("[Viewer] Connection state:", pc.connectionState);
-              if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
-                setIsReceiving(false);
-              }
-            };
+          console.log("[Viewer] Received offer from broadcaster");
+          
+          // Close existing peer connection if any
+          if (pcRef.current) {
+            try {
+              pcRef.current.close();
+            } catch (e) {
+              console.error("[Viewer] Error closing existing PC:", e);
+            }
+            pcRef.current = null;
           }
+          
+          const pc = new RTCPeerConnection(rtcConfig);
+          pcRef.current = pc;
+
+          // Handle incoming tracks
+          pc.ontrack = (event) => {
+            console.log("[Viewer] Received track:", event.track.kind, "readyState:", event.track.readyState);
+            const stream = event.streams[0];
+            if (stream) {
+              console.log("[Viewer] Stream received with", stream.getTracks().length, "tracks");
+              setRemoteStream(stream);
+              setIsReceiving(true);
+              clearConnectionTimeouts();
+              onStreamReady?.(stream);
+            }
+          };
+
+          // Handle ICE candidates
+          pc.onicecandidate = (event) => {
+            if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+              console.log("[Viewer] Sending ICE candidate:", event.candidate.type || "unknown");
+              wsRef.current.send(
+                JSON.stringify({
+                  type: "ice_candidate",
+                  candidate: event.candidate,
+                })
+              );
+            }
+          };
+
+          // Monitor ICE gathering state
+          pc.onicegatheringstatechange = () => {
+            console.log("[Viewer] ICE gathering state:", pc.iceGatheringState);
+          };
+
+          // Monitor ICE connection state (critical for detecting failures)
+          pc.oniceconnectionstatechange = () => {
+            console.log("[Viewer] ICE connection state:", pc.iceConnectionState);
+            
+            if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
+              console.log("[Viewer] ICE connection established successfully");
+              clearConnectionTimeouts();
+              setError(null);
+            } else if (pc.iceConnectionState === "failed") {
+              console.error("[Viewer] ICE connection FAILED - likely NAT/firewall issue");
+              setError("Connection failed - network may be blocking video");
+              setIsReceiving(false);
+              // Trigger reconnection
+              if (!isCleanupRef.current && reconnectAttemptsRef.current < 3) {
+                reconnectAttemptsRef.current++;
+                console.log("[Viewer] Attempting ICE restart...");
+                // Close and reconnect via WebSocket
+                wsRef.current?.close();
+              }
+            } else if (pc.iceConnectionState === "disconnected") {
+              console.warn("[Viewer] ICE connection disconnected, waiting for recovery...");
+              // Give it 5 seconds to recover before marking as failed
+              iceTimeoutRef.current = setTimeout(() => {
+                if (pcRef.current?.iceConnectionState === "disconnected") {
+                  console.error("[Viewer] ICE connection did not recover");
+                  setIsReceiving(false);
+                }
+              }, 5000);
+            }
+          };
+
+          pc.onconnectionstatechange = () => {
+            console.log("[Viewer] Connection state:", pc.connectionState);
+            if (pc.connectionState === "connected") {
+              setError(null);
+            } else if (pc.connectionState === "failed") {
+              console.error("[Viewer] Peer connection FAILED");
+              setIsReceiving(false);
+              setError("Stream connection failed");
+            }
+          };
 
           try {
-            await pcRef.current!.setRemoteDescription(new RTCSessionDescription(message.sdp));
-            const answer = await pcRef.current!.createAnswer();
-            await pcRef.current!.setLocalDescription(answer);
+            await pc.setRemoteDescription(new RTCSessionDescription(message.sdp));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
 
             wsRef.current?.send(
               JSON.stringify({
                 type: "answer",
-                sdp: pcRef.current!.localDescription,
+                sdp: pc.localDescription,
               })
             );
+            console.log("[Viewer] Answer sent, waiting for ICE connection...");
+            
+            // Set a connection timeout - if no stream in 15s, something is wrong
+            connectionTimeoutRef.current = setTimeout(() => {
+              if (!isCleanupRef.current && !remoteStream) {
+                console.error("[Viewer] Connection timeout - no stream received in 15s");
+                setError("Connection timeout - trying again...");
+                // Trigger reconnection
+                if (reconnectAttemptsRef.current < 3) {
+                  wsRef.current?.close();
+                }
+              }
+            }, 15000);
+            
           } catch (err) {
             console.error("[Viewer] Failed to handle offer:", err);
             setError("Failed to establish connection");
@@ -94,8 +174,13 @@ export function useViewer({
           if (pcRef.current && message.candidate) {
             try {
               await pcRef.current.addIceCandidate(new RTCIceCandidate(message.candidate));
+              console.log("[Viewer] Added remote ICE candidate");
             } catch (err) {
-              console.error("[Viewer] Failed to add ICE candidate:", err);
+              // Ignore errors for candidates that arrive after connection is established
+              if (pcRef.current.iceConnectionState !== "connected" && 
+                  pcRef.current.iceConnectionState !== "completed") {
+                console.error("[Viewer] Failed to add ICE candidate:", err);
+              }
             }
           }
           break;
@@ -191,6 +276,9 @@ export function useViewer({
       reconnectTimeoutRef.current = null;
     }
     reconnectAttemptsRef.current = 0;
+    
+    // Clear ICE/connection timeouts
+    clearConnectionTimeouts();
 
     if (pcRef.current) {
       try {
