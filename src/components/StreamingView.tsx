@@ -152,32 +152,32 @@ export function StreamingView({
         />
 
         {/* Overlay gradient for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(240,15%,3%)]/80 via-transparent to-[hsl(240,15%,3%)]/90 pointer-events-none" />
 
         {/* Top bar */}
-        <div className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
+        <div className="absolute left-0 right-0 top-0 flex items-center justify-between p-4 animate-fade-in">
           <div className="flex items-center gap-2">
             <LiveIndicator size="lg" />
             {isBroadcasting ? (
-              <Badge className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 gap-1">
+              <Badge className="bg-[hsl(160,100%,45%)]/20 text-[hsl(160,100%,50%)] border border-[hsl(160,100%,45%)]/40 gap-1.5 backdrop-blur-sm">
                 <Wifi className="h-3 w-3" />
                 Broadcasting
               </Badge>
             ) : (
-              <Badge className="bg-amber-600/20 text-amber-400 border border-amber-500/30 gap-1">
+              <Badge className="bg-[hsl(35,100%,50%)]/20 text-[hsl(35,100%,55%)] border border-[hsl(35,100%,50%)]/40 gap-1.5 backdrop-blur-sm">
                 <WifiOff className="h-3 w-3" />
                 Connecting...
               </Badge>
             )}
             {isRecording && (
-              <Badge className="bg-red-600/20 text-red-400 border border-red-500/30 gap-1">
-                <Circle className="h-2.5 w-2.5 fill-red-500" />
+              <Badge className="bg-[hsl(350,100%,55%)]/20 text-[hsl(350,100%,60%)] border border-[hsl(350,100%,55%)]/40 gap-1.5 backdrop-blur-sm">
+                <Circle className="h-2.5 w-2.5 fill-[hsl(350,100%,55%)]" />
                 Recording
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-2 rounded-full bg-black/80 px-4 py-2 backdrop-blur-sm border border-white/10">
-            <Clock className="h-4 w-4 text-white" />
+          <div className="flex items-center gap-2 rounded-full bg-[hsl(240,15%,8%)]/90 px-4 py-2 backdrop-blur-md border border-[hsl(220,15%,20%)]/50">
+            <Clock className="h-4 w-4 text-[hsl(220,15%,60%)]" />
             <span className="font-mono text-sm font-bold text-white">
               {formatDuration(duration)}
             </span>
@@ -187,7 +187,7 @@ export function StreamingView({
         {/* Error banner */}
         {(error || broadcastError) && (
           <div className="absolute left-4 right-4 top-16 animate-fade-in">
-            <div className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-3 text-white">
+            <div className="flex items-center gap-2 rounded-lg bg-[hsl(35,100%,50%)] px-4 py-3 text-black">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm font-medium">{error || broadcastError}</span>
             </div>
@@ -195,13 +195,13 @@ export function StreamingView({
         )}
 
         {/* Bottom info bar */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 pb-8">
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 animate-fade-in stagger-1">
           <div className="space-y-4">
             {/* Location */}
             {location && (
               <div className="flex items-center gap-2 text-white">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm font-medium">
+                <MapPin className="h-4 w-4 text-[hsl(350,100%,60%)]" />
+                <span className="text-sm font-medium font-mono">
                   {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
                 </span>
               </div>
@@ -209,7 +209,7 @@ export function StreamingView({
 
             {/* Notes */}
             {notes && (
-              <div className="rounded-lg bg-white/10 p-3 backdrop-blur-sm border border-white/10">
+              <div className="rounded-lg bg-[hsl(240,15%,10%)]/80 p-3 backdrop-blur-md border border-[hsl(220,15%,20%)]/50">
                 <p className="text-sm text-white">{notes}</p>
               </div>
             )}
@@ -218,9 +218,9 @@ export function StreamingView({
             <Button
               size="lg"
               onClick={handleStop}
-              className="w-full h-14 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold gap-2 border border-zinc-600"
+              className="w-full h-14 bg-[hsl(240,15%,12%)] hover:bg-[hsl(240,15%,18%)] text-white font-bold gap-2 border border-[hsl(220,15%,25%)] hover:border-[hsl(350,100%,55%)] transition-all duration-300"
             >
-              <Square className="h-5 w-5 fill-current" />
+              <Square className="h-5 w-5 fill-current text-[hsl(350,100%,60%)]" />
               End Stream
             </Button>
           </div>

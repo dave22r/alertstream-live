@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,118 +6,123 @@
 
 @layer base {
   :root {
-    /* Emergency Response Design System */
-    --background: 220 20% 97%;
-    --foreground: 220 30% 10%;
+    /* TACTICAL OPS DESIGN SYSTEM */
+    /* Deep void black with electric accents */
+    
+    --background: 240 15% 3%;
+    --foreground: 220 20% 92%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 30% 10%;
+    --card: 240 15% 6%;
+    --card-foreground: 220 20% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 10%;
+    --popover: 240 15% 8%;
+    --popover-foreground: 220 20% 92%;
 
-    /* Primary: Deep Navy - Authority & Trust */
-    --primary: 220 50% 15%;
+    /* Primary: Electric Crimson */
+    --primary: 350 100% 60%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Slate Gray */
-    --secondary: 220 15% 92%;
-    --secondary-foreground: 220 30% 20%;
+    /* Secondary: Tactical Gray */
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 220 15% 75%;
 
-    --muted: 220 15% 95%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 10% 50%;
 
-    --accent: 220 20% 90%;
-    --accent-foreground: 220 30% 15%;
+    /* Accent: Electric Cyan */
+    --accent: 190 100% 50%;
+    --accent-foreground: 240 15% 3%;
 
-    /* Destructive/Emergency: Urgent Red */
-    --destructive: 0 85% 50%;
+    /* Destructive/Emergency: Hot Crimson */
+    --destructive: 350 100% 55%;
     --destructive-foreground: 0 0% 100%;
 
     /* Emergency accent for streaming */
-    --emergency: 0 90% 55%;
+    --emergency: 350 100% 58%;
     --emergency-foreground: 0 0% 100%;
-    --emergency-glow: 0 90% 60%;
+    --emergency-glow: 350 100% 65%;
 
-    /* Success/Live indicator */
-    --success: 145 70% 40%;
+    /* Success/Live indicator - Electric Green */
+    --success: 160 100% 45%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning */
-    --warning: 35 95% 50%;
-    --warning-foreground: 0 0% 100%;
+    /* Warning - Hot Amber */
+    --warning: 35 100% 55%;
+    --warning-foreground: 0 0% 0%;
 
-    --border: 220 20% 88%;
-    --input: 220 20% 88%;
-    --ring: 220 50% 40%;
+    --border: 220 15% 15%;
+    --input: 220 15% 12%;
+    --ring: 350 100% 55%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Custom shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 30% 10% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(220 30% 10% / 0.1), 0 2px 4px -2px hsl(220 30% 10% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(220 30% 10% / 0.1), 0 4px 6px -4px hsl(220 30% 10% / 0.1);
-    --shadow-emergency: 0 0 30px -5px hsl(0 90% 55% / 0.4);
+    /* Custom shadows with color */
+    --shadow-sm: 0 1px 2px 0 hsl(240 15% 0% / 0.5);
+    --shadow-md: 0 4px 12px -2px hsl(240 15% 0% / 0.6);
+    --shadow-lg: 0 12px 40px -8px hsl(240 15% 0% / 0.7);
+    --shadow-emergency: 0 0 60px -10px hsl(350 100% 55% / 0.6);
+    --shadow-glow: 0 0 40px -10px hsl(190 100% 50% / 0.4);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 240 15% 5%;
+    --sidebar-foreground: 220 15% 85%;
+    --sidebar-primary: 350 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 12%;
+    --sidebar-accent-foreground: 220 15% 90%;
+    --sidebar-border: 220 15% 12%;
+    --sidebar-ring: 350 100% 55%;
   }
 
   .dark {
-    --background: 220 25% 8%;
-    --foreground: 220 10% 95%;
+    /* Dark mode uses same values - this IS the dark theme */
+    --background: 240 15% 3%;
+    --foreground: 220 20% 92%;
 
-    --card: 220 25% 12%;
-    --card-foreground: 220 10% 95%;
+    --card: 240 15% 6%;
+    --card-foreground: 220 20% 92%;
 
-    --popover: 220 25% 12%;
-    --popover-foreground: 220 10% 95%;
+    --popover: 240 15% 8%;
+    --popover-foreground: 220 20% 92%;
 
-    --primary: 220 60% 60%;
-    --primary-foreground: 220 25% 8%;
+    --primary: 350 100% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 220 10% 90%;
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 220 15% 75%;
 
-    --muted: 220 20% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 10% 50%;
 
-    --accent: 220 20% 22%;
-    --accent-foreground: 220 10% 95%;
+    --accent: 190 100% 50%;
+    --accent-foreground: 240 15% 3%;
 
-    --destructive: 0 75% 55%;
+    --destructive: 350 100% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --emergency: 0 85% 60%;
+    --emergency: 350 100% 58%;
     --emergency-foreground: 0 0% 100%;
-    --emergency-glow: 0 85% 65%;
+    --emergency-glow: 350 100% 65%;
 
-    --success: 145 65% 45%;
+    --success: 160 100% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 35 90% 55%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 35 100% 55%;
+    --warning-foreground: 0 0% 0%;
 
-    --border: 220 20% 20%;
-    --input: 220 20% 20%;
-    --ring: 220 60% 50%;
+    --border: 220 15% 15%;
+    --input: 220 15% 12%;
+    --ring: 350 100% 55%;
 
-    --shadow-emergency: 0 0 40px -5px hsl(0 85% 60% / 0.5);
+    --shadow-emergency: 0 0 60px -10px hsl(350 100% 55% / 0.6);
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 240 15% 5%;
+    --sidebar-foreground: 220 15% 85%;
+    --sidebar-primary: 350 100% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 220 15% 12%;
+    --sidebar-accent-foreground: 220 15% 90%;
+    --sidebar-border: 220 15% 12%;
+    --sidebar-ring: 350 100% 55%;
   }
 }
 
@@ -126,9 +131,36 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Outfit', system-ui, sans-serif;
+    background-color: hsl(240 15% 3%);
+    background-image: 
+      /* Subtle grid */
+      linear-gradient(hsl(220 15% 8% / 0.8) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(220 15% 8% / 0.8) 1px, transparent 1px),
+      /* Radial glow from top */
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(350 100% 50% / 0.08), transparent),
+      /* Radial glow from bottom right */
+      radial-gradient(ellipse 60% 40% at 100% 100%, hsl(190 100% 50% / 0.05), transparent);
+    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+    background-attachment: fixed;
+  }
+
+  /* Monospace for data/code */
+  code, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Heading styles */
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -136,31 +168,83 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Glow effects */
+  .glow-red {
+    box-shadow: 0 0 30px -5px hsl(350 100% 55% / 0.5);
+  }
+  
+  .glow-cyan {
+    box-shadow: 0 0 30px -5px hsl(190 100% 50% / 0.5);
+  }
+
+  .text-glow-red {
+    text-shadow: 0 0 20px hsl(350 100% 55% / 0.6);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 20px hsl(190 100% 50% / 0.6);
+  }
+
+  /* Staggered animation delays */
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+  .stagger-7 { animation-delay: 0.35s; }
+  .stagger-8 { animation-delay: 0.4s; }
+
+  /* Glass effect */
+  .glass {
+    background: hsl(240 15% 8% / 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(220 15% 20% / 0.5);
+  }
+
+  /* Tactical border */
+  .border-tactical {
+    border: 1px solid hsl(220 15% 18%);
+    position: relative;
+  }
+
+  .border-tactical::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(350 100% 55% / 0.3), transparent);
+  }
 }
 
-/* Emergency pulse animation */
+/* Enhanced animations */
 @keyframes emergency-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 hsl(var(--emergency) / 0.7);
+    box-shadow: 0 0 0 0 hsl(350 100% 55% / 0.7);
   }
   50% {
-    box-shadow: 0 0 0 20px hsl(var(--emergency) / 0);
+    box-shadow: 0 0 0 15px hsl(350 100% 55% / 0);
   }
 }
 
 @keyframes live-pulse {
   0%, 100% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.6;
+    transform: scale(1.1);
   }
 }
 
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -168,14 +252,54 @@
   }
 }
 
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes scale-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.9);
   }
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px hsl(350 100% 55% / 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px hsl(350 100% 55% / 0.9));
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
   }
 }
 
@@ -188,9 +312,73 @@
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out forwards;
+  animation: fade-in 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s ease-out forwards;
+  opacity: 0;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.2s ease-out forwards;
+  animation: scale-in 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Leaflet Map Styling */
+.leaflet-container {
+  background: hsl(var(--background));
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper {
+  background: white;
+  color: #333;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
+
+.leaflet-control-zoom a {
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: hsl(var(--accent)) !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.6) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 10px !important;
+}
+
+.leaflet-control-attribution a {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Dark mode tiles filter */
+.map-tiles {
+  filter: grayscale(0.7) brightness(0.6) contrast(1.2);
+}
+
+/* Stream popup styling */
+.stream-popup .leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
 }

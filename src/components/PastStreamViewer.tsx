@@ -15,6 +15,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
   const videoUrl = `${signalingConfig.httpBase}${stream.video_url}`;
 
   const formatDuration = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "00:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -42,23 +43,23 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-zinc-950">
+    <div className="fixed inset-0 z-50 bg-[hsl(240,15%,3%)]">
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4 bg-zinc-900">
+        <div className="flex items-center justify-between border-b border-[hsl(220,15%,12%)] px-6 py-4 bg-[hsl(240,15%,5%)]">
           <div className="flex items-center gap-3">
-            <Badge className="bg-zinc-700 text-zinc-200 text-xs font-semibold px-2 py-1 gap-1.5 border-0">
+            <Badge className="bg-[hsl(240,15%,15%)] text-[hsl(220,15%,70%)] text-xs font-bold px-2 py-1 gap-1.5 border border-[hsl(220,15%,25%)]">
               <Play className="h-3 w-3" />
               RECORDED
             </Badge>
-            <h2 className="text-xl font-bold text-white">Stream: {stream.id.substring(0, 12)}...</h2>
+            <h2 className="text-xl font-bold text-white tracking-tight font-mono">Stream: {stream.id.substring(0, 12)}...</h2>
           </div>
           <div className="flex items-center gap-2">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={handleDownload}
-              className="text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2"
+              className="text-[hsl(350,100%,55%)] hover:text-[hsl(350,100%,65%)] hover:bg-[hsl(350,100%,55%)]/10 gap-2"
             >
               <Download className="h-4 w-4" />
               Download
@@ -67,7 +68,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
               variant="ghost" 
               size="sm"
               onClick={onDelete}
-              className="text-red-400 hover:text-red-300 hover:bg-red-900/30 gap-2"
+              className="text-[hsl(350,100%,55%)] hover:text-[hsl(350,100%,65%)] hover:bg-[hsl(350,100%,55%)]/10 gap-2"
             >
               <Trash2 className="h-4 w-4" />
               Delete
@@ -76,7 +77,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
               variant="ghost" 
               size="icon" 
               onClick={onClose}
-              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              className="text-[hsl(220,15%,50%)] hover:text-white hover:bg-[hsl(240,15%,12%)]"
             >
               <X className="h-5 w-5" />
             </Button>
@@ -84,21 +85,21 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-6 overflow-auto bg-zinc-950">
+        <div className="flex-1 p-6 overflow-auto bg-[hsl(240,15%,3%)]">
           <div className="grid gap-6 lg:grid-cols-3 h-full">
             {/* Video player - takes up 2 columns */}
             <div className="lg:col-span-2">
-              <Card className="overflow-hidden border-zinc-800 bg-zinc-900 h-full">
-                <CardHeader className="border-b border-zinc-800 pb-3 bg-zinc-900">
+              <Card className="overflow-hidden border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)] h-full">
+                <CardHeader className="border-b border-[hsl(220,15%,12%)] pb-3 bg-[hsl(240,15%,6%)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Play className="h-5 w-5 text-blue-500" />
-                      <CardTitle className="text-lg font-semibold text-white">
+                      <Play className="h-5 w-5 text-[hsl(350,100%,50%)]" />
+                      <CardTitle className="text-lg font-bold text-white tracking-tight">
                         Recorded Stream
                       </CardTitle>
                     </div>
-                    <div className="flex items-center gap-2 rounded-full bg-zinc-800 border border-zinc-700 px-3 py-1.5">
-                      <Clock className="h-4 w-4 text-zinc-400" />
+                    <div className="flex items-center gap-2 rounded-full bg-[hsl(240,15%,10%)] border border-[hsl(220,15%,18%)] px-3 py-1.5">
+                      <Clock className="h-4 w-4 text-[hsl(220,15%,50%)]" />
                       <span className="font-mono text-sm font-bold text-white">
                         {formatDuration(stream.duration_seconds)}
                       </span>
@@ -119,75 +120,75 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
 
             {/* Metadata panel */}
             <div className="space-y-4">
-              <Card className="border-zinc-800 bg-zinc-900">
-                <CardHeader className="pb-3 bg-zinc-900">
-                  <CardTitle className="flex items-center gap-2 text-base text-white">
-                    <Calendar className="h-4 w-4 text-blue-500" />
+              <Card className="border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)]">
+                <CardHeader className="pb-3 bg-[hsl(240,15%,6%)]">
+                  <CardTitle className="flex items-center gap-2 text-base text-white font-bold tracking-tight">
+                    <Calendar className="h-4 w-4 text-[hsl(350,100%,50%)]" />
                     Stream Details
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 bg-zinc-900">
+                <CardContent className="space-y-4 bg-[hsl(240,15%,6%)]">
                   <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    <p className="text-xs font-medium uppercase tracking-wider text-[hsl(220,15%,45%)]">
                       Stream ID
                     </p>
-                    <p className="font-mono text-sm text-zinc-300">{stream.id}</p>
+                    <p className="font-mono text-sm text-[hsl(220,15%,70%)]">{stream.id}</p>
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    <p className="text-xs font-medium uppercase tracking-wider text-[hsl(220,15%,45%)]">
                       Started At
                     </p>
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-zinc-500" />
-                      <p className="text-sm text-zinc-300">{formatTimestamp(stream.started_at)}</p>
+                      <Clock className="h-4 w-4 text-[hsl(220,15%,50%)]" />
+                      <p className="text-sm text-[hsl(220,15%,70%)] font-mono">{formatTimestamp(stream.started_at)}</p>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    <p className="text-xs font-medium uppercase tracking-wider text-[hsl(220,15%,45%)]">
                       Ended At
                     </p>
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-zinc-500" />
-                      <p className="text-sm text-zinc-300">{formatTimestamp(stream.ended_at)}</p>
+                      <Clock className="h-4 w-4 text-[hsl(220,15%,50%)]" />
+                      <p className="text-sm text-[hsl(220,15%,70%)] font-mono">{formatTimestamp(stream.ended_at)}</p>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    <p className="text-xs font-medium uppercase tracking-wider text-[hsl(220,15%,45%)]">
                       Duration
                     </p>
-                    <p className="font-mono text-lg font-bold text-blue-500">
+                    <p className="font-mono text-lg font-bold text-[hsl(350,100%,50%)]">
                       {formatDuration(stream.duration_seconds)}
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-zinc-800 bg-zinc-900">
-                <CardHeader className="pb-3 bg-zinc-900">
-                  <CardTitle className="flex items-center gap-2 text-base text-white">
-                    <MapPin className="h-4 w-4 text-blue-500" />
+              <Card className="border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)]">
+                <CardHeader className="pb-3 bg-[hsl(240,15%,6%)]">
+                  <CardTitle className="flex items-center gap-2 text-base text-white font-bold tracking-tight">
+                    <MapPin className="h-4 w-4 text-[hsl(350,100%,50%)]" />
                     Location
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 bg-zinc-900">
+                <CardContent className="space-y-3 bg-[hsl(240,15%,6%)]">
                   {/* Always show coordinates in separate boxes */}
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-lg bg-zinc-800 border border-zinc-700 p-2">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 mb-1">
+                    <div className="rounded-lg bg-[hsl(240,15%,10%)] border border-[hsl(220,15%,18%)] p-2">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-[hsl(220,15%,45%)] mb-1">
                         Latitude
                       </p>
-                      <p className="font-mono text-sm text-zinc-300">
+                      <p className="font-mono text-sm text-[hsl(220,15%,70%)]">
                         {stream.latitude.toFixed(6)}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-zinc-800 border border-zinc-700 p-2">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 mb-1">
+                    <div className="rounded-lg bg-[hsl(240,15%,10%)] border border-[hsl(220,15%,18%)] p-2">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-[hsl(220,15%,45%)] mb-1">
                         Longitude
                       </p>
-                      <p className="font-mono text-sm text-zinc-300">
+                      <p className="font-mono text-sm text-[hsl(220,15%,70%)]">
                         {stream.longitude.toFixed(6)}
                       </p>
                     </div>
@@ -199,7 +200,7 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
                       rel="noopener noreferrer"
                       className="block"
                     >
-                      <div className="aspect-video rounded-lg overflow-hidden border border-zinc-700 relative group">
+                      <div className="aspect-video rounded-lg overflow-hidden border border-[hsl(220,15%,18%)] relative group">
                         <img
                           src={`https://static-maps.yandex.ru/1.x/?ll=${stream.longitude},${stream.latitude}&z=15&l=map&size=400,300&pt=${stream.longitude},${stream.latitude},pm2rdl`}
                           alt="Location map"
@@ -213,10 +214,10 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
                       </div>
                     </a>
                   ) : (
-                    <div className="aspect-video rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                    <div className="aspect-video rounded-lg bg-[hsl(240,15%,10%)] border border-[hsl(220,15%,18%)] flex items-center justify-center">
                       <div className="text-center">
-                        <MapPin className="mx-auto h-8 w-8 text-zinc-600" />
-                        <p className="mt-2 text-xs text-zinc-500">No location data</p>
+                        <MapPin className="mx-auto h-8 w-8 text-[hsl(220,15%,30%)]" />
+                        <p className="mt-2 text-xs text-[hsl(220,15%,45%)]">No location data</p>
                       </div>
                     </div>
                   )}
@@ -224,16 +225,16 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
               </Card>
 
               {stream.notes && stream.notes.trim() !== "" && (
-                <Card className="border-zinc-800 bg-zinc-900">
-                  <CardHeader className="pb-3 bg-zinc-900">
-                    <CardTitle className="flex items-center gap-2 text-base text-white">
-                      <FileText className="h-4 w-4 text-amber-500" />
+                <Card className="border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)]">
+                  <CardHeader className="pb-3 bg-[hsl(240,15%,6%)]">
+                    <CardTitle className="flex items-center gap-2 text-base text-white font-bold tracking-tight">
+                      <FileText className="h-4 w-4 text-[hsl(35,100%,55%)]" />
                       Additional Context
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="bg-zinc-900">
-                    <div className="rounded-lg bg-amber-600/10 border border-amber-500/30 p-3">
-                      <p className="text-sm leading-relaxed text-zinc-300">{stream.notes}</p>
+                  <CardContent className="bg-[hsl(240,15%,6%)]">
+                    <div className="rounded-lg bg-[hsl(35,100%,55%)]/10 border border-[hsl(35,100%,55%)]/30 p-3">
+                      <p className="text-sm leading-relaxed text-[hsl(220,15%,70%)]">{stream.notes}</p>
                     </div>
                   </CardContent>
                 </Card>

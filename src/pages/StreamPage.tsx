@@ -61,22 +61,29 @@ export default function StreamPage() {
     );
   }
 
-  // Start screen - dark zinc theme
+  // Start screen - tactical dark theme
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-950">
+    <div className="flex min-h-screen flex-col">
+      {/* Ambient glow */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-30%] left-[50%] translate-x-[-50%] w-[800px] h-[800px] rounded-full bg-[hsl(350,100%,50%)] opacity-[0.03] blur-[150px]" />
+      </div>
+
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-600">
-            <Shield className="h-5 w-5 text-white" />
+      <header className="relative z-10 flex items-center justify-between border-b border-[hsl(220,15%,12%)] px-4 py-3 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-10 w-10 items-center justify-center">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[hsl(350,100%,55%)] to-[hsl(350,100%,40%)]" />
+            <div className="absolute inset-0 rounded-xl bg-[hsl(350,100%,55%)] blur-md opacity-40" />
+            <Shield className="relative h-5 w-5 text-white" />
           </div>
-          <span className="text-lg font-bold text-white">SafeStream</span>
+          <span className="text-lg font-bold text-white tracking-tight">SafeStream</span>
         </div>
         <Button
           variant="ghost"
           size="sm"
           asChild
-          className="h-8 w-8 p-0 text-zinc-400 hover:text-white"
+          className="h-8 w-8 p-0 text-[hsl(220,15%,45%)] hover:text-white hover:bg-[hsl(220,15%,15%)]"
         >
           <Link to="/">
             <Home className="h-4 w-4" />
@@ -85,39 +92,42 @@ export default function StreamPage() {
       </header>
 
       {/* Main content */}
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-md space-y-8 text-center">
           {/* Icon */}
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-red-600/10 border border-red-500/20">
-            <Radio className="h-12 w-12 text-red-500" />
+          <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-[hsl(350,100%,50%)]/10 border border-[hsl(350,100%,50%)]/20 animate-fade-in stagger-1">
+            <div className="relative">
+              <Radio className="h-14 w-14 text-[hsl(350,100%,60%)] animate-glow-pulse" />
+            </div>
           </div>
 
           {/* Title */}
-          <div className="space-y-3">
-            <h1 className="text-3xl font-bold tracking-tight text-white">
+          <div className="space-y-3 animate-fade-in stagger-2">
+            <h1 className="text-4xl font-extrabold tracking-tight text-white">
               Emergency Stream
             </h1>
-            <p className="text-base text-zinc-400 leading-relaxed">
+            <p className="text-base text-[hsl(220,15%,55%)] leading-relaxed">
               Instantly share live video and location with verified emergency
               responders. No login required.
             </p>
           </div>
 
           {/* Start button */}
-          <div className="pt-4">
+          <div className="pt-4 animate-fade-in stagger-3">
             <Button
               size="lg"
               onClick={handleStartClick}
-              className="w-full h-14 text-base font-semibold bg-red-600 hover:bg-red-700 text-white gap-2"
+              className="relative w-full h-14 text-base font-bold bg-gradient-to-r from-[hsl(350,100%,50%)] to-[hsl(350,100%,45%)] hover:from-[hsl(350,100%,55%)] hover:to-[hsl(350,100%,50%)] text-white gap-3 border-0 shadow-[0_0_50px_-10px_hsl(350,100%,55%)] hover:shadow-[0_0_70px_-10px_hsl(350,100%,60%)] transition-all duration-300 group"
             >
-              <Radio className="h-5 w-5" />
-              Start Emergency Stream
+              <div className="absolute inset-0 rounded-md bg-gradient-to-r from-[hsl(350,100%,60%)] to-[hsl(350,100%,50%)] opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" />
+              <Radio className="relative h-5 w-5" />
+              <span className="relative">Start Emergency Stream</span>
             </Button>
           </div>
 
           {/* Info text */}
-          <div className="space-y-2 pt-4">
-            <p className="text-xs text-zinc-500">
+          <div className="space-y-2 pt-4 animate-fade-in stagger-4">
+            <p className="text-xs text-[hsl(220,15%,40%)]">
               Only use in genuine emergencies. Your stream will be visible to
               verified law enforcement only.
             </p>
@@ -126,9 +136,9 @@ export default function StreamPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-800 p-4">
-        <div className="flex items-center justify-center gap-2 text-sm text-zinc-500">
-          <Phone className="h-4 w-4" />
+      <footer className="relative z-10 border-t border-[hsl(220,15%,12%)] p-4 animate-fade-in stagger-5">
+        <div className="flex items-center justify-center gap-2 text-sm text-[hsl(220,15%,40%)]">
+          <Phone className="h-4 w-4 text-[hsl(350,100%,55%)]" />
           <span>For immediate danger, always call 911 first</span>
         </div>
       </footer>
