@@ -140,16 +140,19 @@ export function useBroadcaster({
 
       // Add media tracks to the connection
       if (mediaStream) {
-        mediaStream.getTracks().forEach((track) => {
-          console.log(`[Broadcaster] Adding track to PC for ${viewerId}:`, track.kind, track.readyState);
+        const tracks = mediaStream.getTracks();
+        console.log(`[Broadcaster] Adding ${tracks.length} tracks for viewer ${viewerId}`);
+        tracks.forEach((track) => {
+          console.log(`[Broadcaster] Adding ${track.kind} track, enabled: ${track.enabled}, state: ${track.readyState}`);
           pc.addTrack(track, mediaStream);
         });
+      } else {
+        console.error("[Broadcaster] No mediaStream available!");
       }
 
       // Handle ICE candidates
       pc.onicecandidate = (event) => {
         if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
-          console.log(`[Broadcaster] Sending ICE candidate to ${viewerId}:`, event.candidate.type || "unknown");
           wsRef.current.send(
             JSON.stringify({
               type: "ice_candidate",
@@ -160,27 +163,18 @@ export function useBroadcaster({
         }
       };
 
-      // Monitor ICE gathering state
-      pc.onicegatheringstatechange = () => {
-        console.log(`[Broadcaster] ICE gathering state for ${viewerId}:`, pc.iceGatheringState);
-      };
-
-      // Monitor ICE connection state (critical for debugging)
       pc.oniceconnectionstatechange = () => {
-        console.log(`[Broadcaster] ICE connection state for ${viewerId}:`, pc.iceConnectionState);
+        console.log(`[Broadcaster] ICE state for ${viewerId}:`, pc.iceConnectionState);
         if (pc.iceConnectionState === "failed") {
-          console.error(`[Broadcaster] ICE connection FAILED for ${viewerId} - closing and removing`);
+          console.error(`[Broadcaster] ICE failed for ${viewerId}`);
           pc.close();
           peerConnectionsRef.current.delete(viewerId);
-        } else if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
-          console.log(`[Broadcaster] ICE connected successfully for ${viewerId}`);
         }
       };
 
       pc.onconnectionstatechange = () => {
         console.log(`[Broadcaster] Connection state for ${viewerId}:`, pc.connectionState);
         if (pc.connectionState === "failed") {
-          console.error(`[Broadcaster] Peer connection FAILED for ${viewerId}`);
           pc.close();
           peerConnectionsRef.current.delete(viewerId);
         }
@@ -203,6 +197,15 @@ export function useBroadcaster({
         case "viewer_joined": {
           console.log("[Broadcaster] Viewer joined:", message.viewer_id);
           const viewerId = String(message.viewer_id);
+          
+          if (!mediaStream) {
+            console.error("[Broadcaster] No mediaStream when viewer joined!");
+            return;
+          }
+          
+          console.log("[Broadcaster] MediaStream active:", mediaStream.active);
+          console.log("[Broadcaster] MediaStream tracks:", mediaStream.getTracks().length);
+          
           const pc = createPeerConnection(viewerId);
 
           try {
@@ -216,6 +219,7 @@ export function useBroadcaster({
                 viewer_id: viewerId,
               })
             );
+            console.log("[Broadcaster] Offer sent to viewer:", viewerId);
           } catch (err) {
             console.error("[Broadcaster] Failed to create offer:", err);
           }
@@ -229,6 +233,7 @@ export function useBroadcaster({
           if (answerPc && message.sdp) {
             try {
               await answerPc.setRemoteDescription(new RTCSessionDescription(message.sdp as RTCSessionDescriptionInit));
+              console.log("[Broadcaster] Remote description set for viewer:", answerViewerId);
             } catch (err) {
               console.error("[Broadcaster] Failed to set remote description:", err);
             }
@@ -249,7 +254,7 @@ export function useBroadcaster({
         }
       }
     },
-    [createPeerConnection]
+    [createPeerConnection, mediaStream]
   );
 
   const startBroadcast = useCallback(() => {
@@ -263,9 +268,10 @@ export function useBroadcaster({
       return;
     }
 
+    isCleanupRef.current = false;
+
     // Close existing connection if any
     if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
-      console.log("[Broadcaster] Closing existing connection before starting new one");
       try {
         wsRef.current.close();
       } catch (err) {
@@ -274,11 +280,12 @@ export function useBroadcaster({
     }
 
     try {
+      console.log("[Broadcaster] Connecting to:", signalingConfig.broadcastWs(streamId));
       const ws = new WebSocket(signalingConfig.broadcastWs(streamId));
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("[Broadcaster] Connected to signaling server");
+        console.log("[Broadcaster] WebSocket connected");
         setIsConnected(true);
         setError(null);
         reconnectAttemptsRef.current = 0;
@@ -287,19 +294,14 @@ export function useBroadcaster({
         startRecording();
 
         // Register the stream
-        try {
-          ws.send(
-            JSON.stringify({
-              type: "start_stream",
-              latitude,
-              longitude,
-              notes,
-            })
-          );
-        } catch (err) {
-          console.error("[Broadcaster] Error sending start_stream:", err);
-          setError("Failed to register stream");
-        }
+        ws.send(
+          JSON.stringify({
+            type: "start_stream",
+            latitude,
+            longitude,
+            notes,
+          })
+        );
       };
 
       ws.onmessage = (event) => {
@@ -307,24 +309,22 @@ export function useBroadcaster({
           const message = JSON.parse(event.data);
           handleSignalingMessage(message);
         } catch (err) {
-          console.error("[Broadcaster] Failed to parse message:", err, "Data:", event.data);
+          console.error("[Broadcaster] Failed to parse message:", err);
         }
       };
 
-    ws.onerror = (event) => {
-      console.error("[Broadcaster] WebSocket error:", event);
-      setError("Connection error");
-    };
+      ws.onerror = (event) => {
+        console.error("[Broadcaster] WebSocket error:", event);
+        setError("Connection error");
+      };
 
       ws.onclose = () => {
-        console.log("[Broadcaster] Disconnected from signaling server");
+        console.log("[Broadcaster] WebSocket disconnected");
         setIsConnected(false);
-        setIsBroadcasting(false);
         
-        // Attempt reconnection if not intentional cleanup
-        if (!isCleanupRef.current && reconnectAttemptsRef.current < 5 && mediaStream) {
+        if (!isCleanupRef.current && reconnectAttemptsRef.current < 5) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
-          console.log(`[Broadcaster] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1}/5)`);
+          console.log(`[Broadcaster] Reconnecting in ${delay}ms`);
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
             startBroadcast();
@@ -336,19 +336,17 @@ export function useBroadcaster({
       setError("Failed to connect to server");
       setIsConnected(false);
     }
-  }, [streamId, mediaStream, latitude, longitude, notes, handleSignalingMessage, startRecording]);
+  }, [mediaStream, streamId, latitude, longitude, notes, handleSignalingMessage, startRecording]);
 
   const stopBroadcast = useCallback(() => {
     isCleanupRef.current = true;
-    
-    // Clear any pending reconnection
+
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-    reconnectAttemptsRef.current = 0;
-    
-    // Stop recording first (this will trigger upload)
+
+    // Stop recording
     stopRecording();
 
     // Close all peer connections
@@ -364,9 +362,7 @@ export function useBroadcaster({
     // Close WebSocket
     if (wsRef.current) {
       try {
-        if (wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(JSON.stringify({ type: "stop_stream" }));
-        }
+        wsRef.current.send(JSON.stringify({ type: "stop_stream" }));
         wsRef.current.close();
       } catch (err) {
         console.error("[Broadcaster] Error closing WebSocket:", err);
@@ -376,15 +372,12 @@ export function useBroadcaster({
 
     setIsBroadcasting(false);
     setIsConnected(false);
-    setError(null);
-    
-    // Reset cleanup flag after a short delay
-    setTimeout(() => {
-      isCleanupRef.current = false;
-    }, 100);
   }, [stopRecording]);
 
   const updateLocation = useCallback((lat: number, lng: number) => {
+    latitudeRef.current = lat;
+    longitudeRef.current = lng;
+    
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(
         JSON.stringify({

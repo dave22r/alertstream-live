@@ -47,9 +47,17 @@ export function StreamCardLive({ stream, duration, onClick, highlighted }: Strea
 
   useEffect(() => {
     if (videoRef.current && remoteStream) {
+      console.log(`[StreamCard] Setting srcObject for stream ${stream.id}`);
+      console.log(`[StreamCard] Remote stream has ${remoteStream.getTracks().length} tracks:`, 
+        remoteStream.getTracks().map(t => `${t.kind}:${t.readyState}`).join(', '));
       videoRef.current.srcObject = remoteStream;
+      
+      // Force play
+      videoRef.current.play().catch(err => {
+        console.error(`[StreamCard] Error playing video:`, err);
+      });
     }
-  }, [remoteStream]);
+  }, [remoteStream, stream.id]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

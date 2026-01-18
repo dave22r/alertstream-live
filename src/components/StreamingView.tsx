@@ -125,7 +125,13 @@ export function StreamingView({
 
   useEffect(() => {
     if (videoRef.current && stream) {
+      console.log(`[StreamingView] Setting local stream, tracks:`, stream.getTracks().length);
+      stream.getTracks().forEach(track => {
+        console.log(`[StreamingView] Local track: ${track.kind}, enabled: ${track.enabled}, readyState: ${track.readyState}`);
+      });
       videoRef.current.srcObject = stream;
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(err => console.error('[StreamingView] Play error:', err));
     }
   }, [stream]);
 
