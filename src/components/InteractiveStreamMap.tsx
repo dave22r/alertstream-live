@@ -10,9 +10,10 @@ interface InteractiveStreamMapProps {
   streams: StreamData[];
   durations: Record<string, number>;
   onStreamClick: (stream: StreamData) => void;
+  focusLocation?: { lat: number; lng: number } | null;
 }
 
-export function InteractiveStreamMap({ streams, durations, onStreamClick }: InteractiveStreamMapProps) {
+export function InteractiveStreamMap({ streams, durations, onStreamClick, focusLocation }: InteractiveStreamMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -113,6 +114,16 @@ export function InteractiveStreamMap({ streams, durations, onStreamClick }: Inte
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
     }
   }, [validStreams]);
+
+  // Handle focus location from alerts
+  useEffect(() => {
+    if (!leafletMapRef.current || !focusLocation) return;
+    
+    const map = leafletMapRef.current;
+    map.flyTo([focusLocation.lat, focusLocation.lng], 16, {
+      duration: 1.5,
+    });
+  }, [focusLocation]);
 
   if (streams.length === 0) {
     return (

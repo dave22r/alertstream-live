@@ -94,6 +94,7 @@ export default function PoliceDashboard() {
   const [alerts, setAlerts] = useState<ThreatAlert[]>([]);
   const [alertsSidebarOpen, setAlertsSidebarOpen] = useState(true);
   const [highlightedStreamId, setHighlightedStreamId] = useState<string | null>(null);
+  const [mapFocusLocation, setMapFocusLocation] = useState<{ lat: number; lng: number } | null>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Location filter state
@@ -207,9 +208,11 @@ export default function PoliceDashboard() {
 
   // Handle viewing alert location on map
   const handleViewOnMap = (alert: ThreatAlert) => {
-    // Open Google Maps in new tab with the alert location
-    const mapsUrl = `https://www.google.com/maps?q=${alert.latitude},${alert.longitude}&z=18`;
-    window.open(mapsUrl, '_blank');
+    // Switch to map view and focus on alert location
+    setViewMode("map");
+    setMapFocusLocation({ lat: alert.latitude, lng: alert.longitude });
+    // Clear focus after a short delay so it can be re-triggered
+    setTimeout(() => setMapFocusLocation(null), 2000);
   };
 
   // Duration counter
@@ -501,6 +504,7 @@ export default function PoliceDashboard() {
               streams={allStreams}
               durations={durations}
               onStreamClick={(stream) => setSelectedStream(stream)}
+              focusLocation={mapFocusLocation}
             />
           ) : allStreams.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
@@ -691,16 +695,17 @@ export default function PoliceDashboard() {
 
       {/* Alerts Sidebar */}
       <aside
-        className={`fixed top-[57px] left-0 h-[calc(100vh-57px)] bg-[hsl(240,15%,4%)] border-r border-[hsl(220,15%,12%)] transition-all duration-300 z-30 ${
+        className={`fixed top-[57px] left-0 h-[calc(100vh-57px)] bg-[hsl(240,15%,4%)] border-r border-[hsl(220,15%,12%)] transition-all duration-300 z-[90] ${
           alertsSidebarOpen ? 'w-80 translate-x-0' : 'w-80 -translate-x-full'
         }`}
       >
-        {/* Sidebar Toggle Button */}
+        {/* Sidebar Toggle Button - positioned at bottom to avoid overlapping header */}
         <button
           onClick={() => setAlertsSidebarOpen(!alertsSidebarOpen)}
-          className={`absolute top-4 -right-10 h-20 w-10 flex items-center justify-center bg-[hsl(240,15%,6%)] border border-[hsl(220,15%,15%)] border-l-0 rounded-r-lg hover:bg-[hsl(240,15%,10%)] transition-colors ${
-            alerts.length > 0 ? 'text-[hsl(350,100%,60%)]' : 'text-[hsl(220,15%,50%)]'
+          className={`absolute bottom-4 -right-10 h-10 w-10 flex items-center justify-center bg-[hsl(240,15%,6%)] border border-[hsl(220,15%,18%)] rounded-r-lg border-l-0 hover:bg-[hsl(240,15%,10%)] transition-colors shadow-lg cursor-pointer ${
+            alerts.length > 0 ? 'text-[hsl(350,100%,60%)] border-[hsl(350,100%,50%)]/50' : 'text-[hsl(220,15%,50%)]'
           }`}
+          aria-label={alertsSidebarOpen ? "Close alerts sidebar" : "Open alerts sidebar"}
         >
           {alertsSidebarOpen ? (
             <ChevronLeft className="h-5 w-5" />
