@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Activity,
   Signal,
@@ -8,7 +8,6 @@ import {
   SlidersHorizontal,
   RotateCcw,
   Video,
-  Home,
   Clock,
   Play,
   Calendar,
@@ -97,7 +96,7 @@ export default function PoliceDashboard() {
 
   const handleLogout = () => {
     logout();
-    navigate('/police/login');
+    navigate('/');
   };
 
   // Convert and filter streams
@@ -327,18 +326,6 @@ export default function PoliceDashboard() {
                 </>
               )}
             </div>
-
-            {/* Home Link */}
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="h-8 w-8 p-0 text-[hsl(220,15%,50%)] hover:text-white hover:bg-[hsl(220,15%,15%)]"
-            >
-              <Link to="/">
-                <Home className="h-4 w-4" />
-              </Link>
-            </Button>
 
             {/* Logout Button */}
             <Button

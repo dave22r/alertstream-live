@@ -133,22 +133,6 @@ export default function Index() {
             <span className="relative">Start Emergency Stream</span>
           </Button>
         </div>
-
-        {/* Stats row */}
-        <div className="mt-20 grid grid-cols-3 gap-8 max-w-xl mx-auto animate-fade-in stagger-5">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-white">&lt;1s</div>
-            <div className="mt-1 text-sm text-[hsl(220,15%,45%)]">Connection</div>
-          </div>
-          <div className="text-center border-x border-[hsl(220,15%,15%)]">
-            <div className="text-3xl font-bold text-[hsl(350,100%,60%)]">E2E</div>
-            <div className="mt-1 text-sm text-[hsl(220,15%,45%)]">Encrypted</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-[hsl(190,100%,50%)]">24/7</div>
-            <div className="mt-1 text-sm text-[hsl(220,15%,45%)]">Monitoring</div>
-          </div>
-        </div>
       </div>
 
       {/* Bottom accent line */}
