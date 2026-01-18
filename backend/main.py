@@ -29,22 +29,32 @@ model = None
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
+print(f"[AI Sentry] Checking API keys - Gemini: {'SET' if GEMINI_API_KEY else 'NOT SET'}, OpenRouter: {'SET' if OPENROUTER_API_KEY else 'NOT SET'}")
+
 if GEMINI_API_KEY:
     try:
         from google import genai as genai_module
         client = genai_module.Client(api_key=GEMINI_API_KEY)
         genai = genai_module
         model = client.models
-        print("[AI Sentry] Gemini AI initialized successfully")
-    except ImportError:
-        print("[AI Sentry] WARNING: google-genai package not installed")
+        print("[AI Sentry] ✅ Gemini AI initialized successfully")
+    except ImportError as e:
+        print(f"[AI Sentry] ❌ WARNING: google-genai package not installed - {e}")
+        print("[AI Sentry] Run: pip install google-genai>=1.59.0")
     except Exception as e:
-        print(f"[AI Sentry] WARNING: Failed to initialize Gemini: {e}")
+        print(f"[AI Sentry] ❌ WARNING: Failed to initialize Gemini: {e}")
+        print(f"[AI Sentry] Check if GEMINI_API_KEY is valid")
+else:
+    print("[AI Sentry] ⚠️  GEMINI_API_KEY not set - Gemini will not be available")
 
 if OPENROUTER_API_KEY:
-    print("[AI Sentry] OpenRouter API key loaded - will use OpenAI GPT-4o as fallback")
+    print("[AI Sentry] ✅ OpenRouter API key loaded - will use OpenAI GPT-4o as fallback")
 else:
-    print("[AI Sentry] WARNING: No fallback AI provider configured")
+    print("[AI Sentry] ⚠️  WARNING: No fallback AI provider configured")
+    
+if not GEMINI_API_KEY and not OPENROUTER_API_KEY:
+    print("[AI Sentry] ❌ CRITICAL: No AI provider configured! AI Sentry will not work.")
+    print("[AI Sentry] Please set GEMINI_API_KEY or OPENROUTER_API_KEY environment variable.")
 
 app = FastAPI(title="EmergencyEye Signaling Server")
 
@@ -120,7 +130,15 @@ async def broadcast_stream_list():
 
 @app.get("/")
 async def root():
-    return {"status": "ok", "service": "EmergencyEye Signaling Server"}
+    return {
+        "status": "ok", 
+        "service": "EmergencyEye Signaling Server",
+        "ai_sentry": {
+            "gemini_available": model is not None,
+            "openrouter_available": OPENROUTER_API_KEY is not None,
+            "status": "operational" if (model or OPENROUTER_API_KEY) else "no_ai_provider"
+        }
+    }
 
 
 @app.get("/streams")
@@ -526,4 +544,5 @@ async def view_websocket(websocket: WebSocket, stream_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=10000)
+    port = int(os.getenv("PORT", "10000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)
