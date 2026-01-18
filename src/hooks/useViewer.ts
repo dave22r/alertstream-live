@@ -28,6 +28,9 @@ export function useViewer({
 
   const wsRef = useRef<WebSocket | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isCleanupRef = useRef(false);
 
   const handleSignalingMessage = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -115,53 +118,107 @@ export function useViewer({
 
   const connect = useCallback(() => {
     if (!streamId) {
-      // No stream ID provided, skip connecting
+      setError("No stream ID provided");
       return;
     }
 
-    const ws = new WebSocket(signalingConfig.viewWs(streamId));
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log("[Viewer] Connected to signaling server");
-      setIsConnected(true);
-      setError(null);
-    };
-
-    ws.onmessage = (event) => {
+    // Close existing connections if any
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+      console.log("[Viewer] Closing existing connection before connecting");
       try {
-        const message = JSON.parse(event.data);
-        handleSignalingMessage(message);
+        wsRef.current.close();
       } catch (err) {
-        console.error("[Viewer] Failed to parse message:", err);
+        console.error("[Viewer] Error closing existing WebSocket:", err);
       }
-    };
+    }
 
-    ws.onerror = (event) => {
-      console.error("[Viewer] WebSocket error:", event);
-      setError("Connection error");
-    };
+    try {
+      const ws = new WebSocket(signalingConfig.viewWs(streamId));
+      wsRef.current = ws;
 
-    ws.onclose = () => {
-      console.log("[Viewer] Disconnected from signaling server");
+      ws.onopen = () => {
+        console.log("[Viewer] Connected to signaling server");
+        setIsConnected(true);
+        setError(null);
+        reconnectAttemptsRef.current = 0;
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          handleSignalingMessage(message);
+        } catch (err) {
+          console.error("[Viewer] Failed to parse message:", err, "Data:", event.data);
+        }
+      };
+
+      ws.onerror = (event) => {
+        console.error("[Viewer] WebSocket error:", event);
+        setError("Connection error");
+      };
+
+      ws.onclose = () => {
+        console.log("[Viewer] Disconnected from signaling server");
+        setIsConnected(false);
+        setIsReceiving(false);
+        
+        // Attempt reconnection if not intentional cleanup
+        if (!isCleanupRef.current && reconnectAttemptsRef.current < 5) {
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
+          console.log(`[Viewer] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1}/5)`);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectAttemptsRef.current++;
+            connect();
+          }, delay);
+        } else if (reconnectAttemptsRef.current >= 5) {
+          setError("Connection failed after multiple attempts");
+          onStreamEnded?.();
+        }
+      };
+    } catch (err) {
+      console.error("[Viewer] Failed to create WebSocket:", err);
+      setError("Failed to connect to server");
       setIsConnected(false);
-    };
-  }, [streamId, handleSignalingMessage]);
+    }
+  }, [streamId, handleSignalingMessage, onStreamEnded]);
 
   const disconnect = useCallback(() => {
+    isCleanupRef.current = true;
+    
+    // Clear any pending reconnection
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    reconnectAttemptsRef.current = 0;
+
     if (pcRef.current) {
-      pcRef.current.close();
+      try {
+        pcRef.current.close();
+      } catch (err) {
+        console.error("[Viewer] Error closing peer connection:", err);
+      }
       pcRef.current = null;
     }
 
     if (wsRef.current) {
-      wsRef.current.close();
+      try {
+        wsRef.current.close();
+      } catch (err) {
+        console.error("[Viewer] Error closing WebSocket:", err);
+      }
       wsRef.current = null;
     }
 
     setRemoteStream(null);
     setIsReceiving(false);
     setIsConnected(false);
+    setError(null);
+    
+    // Reset cleanup flag after a short delay
+    setTimeout(() => {
+      isCleanupRef.current = false;
+    }, 100);
   }, []);
 
   // Cleanup on unmount
