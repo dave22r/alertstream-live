@@ -106,12 +106,13 @@ export function PastStreamViewer({ stream, onClose, onDelete }: PastStreamViewer
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="p-0 h-[calc(100%-60px)]">
-                  <div className="relative h-full min-h-[400px] bg-black">
+                <CardContent className="p-0">
+                  {/* Fixed 16:9 aspect ratio container for consistent video display */}
+                  <div className="relative w-full bg-black" style={{ paddingTop: "56.25%" }}>
                     <video
                       src={videoUrl}
                       controls
-                      className="h-full w-full object-contain"
+                      className="absolute inset-0 h-full w-full object-cover"
                     />
                   </div>
                 </CardContent>

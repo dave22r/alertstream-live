@@ -305,7 +305,9 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                   </div>
                 </CardHeader>
                 <CardContent className="p-0 flex-1 flex flex-col">
-                  <div className="relative flex-1 min-h-[400px] bg-black">
+                  {/* Fixed 16:9 aspect ratio container for consistent video display */}
+                  <div className="relative w-full bg-black" style={{ paddingTop: "56.25%" }}>
+                    <div className="absolute inset-0">
                     {/* Live Video */}
                     {isLiveMode && remoteStream && (
                       <video
@@ -313,7 +315,7 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                         autoPlay
                         playsInline
                         muted={false}
-                        className="h-full w-full object-contain"
+                        className="h-full w-full object-cover"
                       />
                     )}
 
@@ -324,7 +326,7 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                         src={playbackUrl}
                         autoPlay
                         playsInline
-                        className="h-full w-full object-contain"
+                        className="h-full w-full object-cover"
                       />
                     )}
 
@@ -372,6 +374,7 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                           {error ? "Error" : "Connecting..."}
                         </Badge>
                       )}
+                    </div>
                     </div>
                   </div>
 
