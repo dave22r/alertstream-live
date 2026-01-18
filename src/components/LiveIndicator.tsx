@@ -17,18 +17,18 @@ export function LiveIndicator({ className, size = "md" }: LiveIndicatorProps) {
       <span className="relative flex">
         <span
           className={cn(
-            "absolute inline-flex h-full w-full animate-ping rounded-full bg-emergency opacity-75",
+            "absolute inline-flex h-full w-full animate-ping rounded-full bg-[hsl(350,100%,55%)] opacity-75",
             sizeClasses[size]
           )}
         />
         <span
           className={cn(
-            "relative inline-flex rounded-full bg-emergency",
+            "relative inline-flex rounded-full bg-[hsl(350,100%,55%)]",
             sizeClasses[size]
           )}
         />
       </span>
-      <span className="text-sm font-bold uppercase tracking-wider text-emergency animate-live-pulse">
+      <span className="text-sm font-bold uppercase tracking-wider text-[hsl(350,100%,55%)] animate-emergency-pulse drop-shadow-[0_0_8px_hsl(350,100%,55%)]">
         Live
       </span>
     </div>

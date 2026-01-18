@@ -259,58 +259,58 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
   const hasValidLocation = stream.latitude !== 0 || stream.longitude !== 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-zinc-950">
+    <div className="fixed inset-0 z-50 bg-[hsl(240,15%,3%)]">
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4 bg-zinc-900">
+        <div className="flex items-center justify-between border-b border-[hsl(220,15%,12%)] px-6 py-4 bg-[hsl(240,15%,5%)]">
           <div className="flex items-center gap-3">
-            <Badge className="bg-red-600 text-white text-xs font-semibold px-2 py-1 gap-1.5 border-0">
+            <Badge className="bg-[hsl(350,100%,50%)] text-white text-xs font-bold px-2 py-1 gap-1.5 border-0 shadow-[0_0_15px_-3px_hsl(350,100%,55%)]">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
               </span>
               LIVE
             </Badge>
-            <h2 className="text-xl font-bold text-white">Stream: {stream.id.substring(0, 12)}...</h2>
+            <h2 className="text-xl font-bold text-white tracking-tight font-mono">Stream: {stream.id.substring(0, 12)}...</h2>
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={onClose}
-            className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+            className="text-[hsl(220,15%,50%)] hover:text-white hover:bg-[hsl(240,15%,12%)]"
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-6 overflow-auto bg-zinc-950">
+        <div className="flex-1 p-6 overflow-auto bg-[hsl(240,15%,3%)]">
           <div className="grid gap-6 lg:grid-cols-3 h-full">
             {/* Video feed - takes up 2 columns */}
             <div className="lg:col-span-2">
-              <Card className="overflow-hidden border-zinc-800 bg-zinc-900 h-full flex flex-col">
-                <CardHeader className="border-b border-zinc-800 pb-3 bg-zinc-900 flex-shrink-0">
+              <Card className="overflow-hidden border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)] h-full flex flex-col">
+                <CardHeader className="border-b border-[hsl(220,15%,12%)] pb-3 bg-[hsl(240,15%,6%)] flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Radio className="h-5 w-5 text-red-500" />
-                      <CardTitle className="text-lg font-semibold text-white">
+                      <Radio className="h-5 w-5 text-[hsl(350,100%,55%)]" />
+                      <CardTitle className="text-lg font-bold text-white tracking-tight">
                         {isLiveMode ? "Live Feed" : "Playback"}
                       </CardTitle>
                       {!isLiveMode && (
-                        <Badge className="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-xs">
+                        <Badge className="bg-[hsl(190,100%,50%)]/20 text-[hsl(190,100%,60%)] border border-[hsl(190,100%,50%)]/30 text-xs font-mono">
                           DVR
                         </Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
                       {bufferSeconds > 0 && (
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-                          <Circle className="h-2 w-2 fill-red-500 text-red-500" />
+                        <div className="flex items-center gap-1.5 text-xs text-[hsl(220,15%,45%)] font-mono">
+                          <Circle className="h-2 w-2 fill-[hsl(350,100%,55%)] text-[hsl(350,100%,55%)]" />
                           <span>{bufferSeconds}s buffered</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2 rounded-full bg-zinc-800 border border-zinc-700 px-3 py-1.5">
-                        <Clock className="h-4 w-4 text-zinc-400" />
+                      <div className="flex items-center gap-2 rounded-full bg-[hsl(240,15%,10%)] border border-[hsl(220,15%,18%)] px-3 py-1.5">
+                        <Clock className="h-4 w-4 text-[hsl(220,15%,50%)]" />
                         <span className="font-mono text-sm font-bold text-white">
                           {formatDuration(duration)}
                         </span>
@@ -346,13 +346,13 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                     {!remoteStream && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center">
-                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-600/10 border border-red-500/20">
-                            <Radio className="h-8 w-8 text-red-500" />
+                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(350,100%,55%)]/10 border border-[hsl(350,100%,55%)]/30 shadow-[0_0_30px_-5px_hsl(350,100%,55%)]">
+                            <Radio className="h-8 w-8 text-[hsl(350,100%,55%)] animate-pulse" />
                           </div>
-                          <p className="text-sm text-zinc-300">
+                          <p className="text-sm text-[hsl(220,15%,65%)]">
                             {error ? "Failed to connect" : "Connecting to live stream..."}
                           </p>
-                          <p className="mt-1 text-xs text-zinc-500">
+                          <p className="mt-1 text-xs text-[hsl(220,15%,45%)] font-mono">
                             Stream ID: {stream.id.substring(0, 8)}...
                           </p>
                         </div>
@@ -362,7 +362,7 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                     {/* Top badges */}
                     <div className="absolute left-4 top-4 flex gap-2 pointer-events-none">
                       {isLiveMode ? (
-                        <Badge className="bg-red-600 text-white gap-1.5 px-3 py-1 border-0">
+                        <Badge className="bg-[hsl(350,100%,50%)] text-white gap-1.5 px-3 py-1 border-0 shadow-[0_0_15px_-3px_hsl(350,100%,55%)]">
                           <span className="relative flex h-2 w-2">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
                             <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
@@ -370,18 +370,18 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                           LIVE
                         </Badge>
                       ) : (
-                        <Badge className="bg-blue-600 text-white gap-1.5 px-3 py-1 border-0">
+                        <Badge className="bg-[hsl(190,100%,50%)] text-black font-bold gap-1.5 px-3 py-1 border-0 shadow-[0_0_15px_-3px_hsl(190,100%,50%)]">
                           <Play className="h-3 w-3" />
                           PLAYBACK
                         </Badge>
                       )}
                       {isReceiving ? (
-                        <Badge className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 gap-1">
+                        <Badge className="bg-[hsl(160,100%,45%)]/20 text-[hsl(160,100%,55%)] border border-[hsl(160,100%,45%)]/30 gap-1 font-mono">
                           <Wifi className="h-3 w-3" />
                           Connected
                         </Badge>
                       ) : (
-                        <Badge className="bg-amber-600/20 text-amber-400 border border-amber-500/30 gap-1">
+                        <Badge className="bg-[hsl(35,100%,55%)]/20 text-[hsl(35,100%,60%)] border border-[hsl(35,100%,55%)]/30 gap-1 font-mono">
                           <WifiOff className="h-3 w-3" />
                           {error ? "Error" : "Connecting..."}
                         </Badge>
@@ -390,7 +390,7 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                   </div>
 
                   {/* DVR Controls */}
-                  <div className="border-t border-zinc-800 bg-zinc-900 p-4 flex-shrink-0">
+                  <div className="border-t border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)] p-4 flex-shrink-0">
                     {/* Progress bar for playback mode - always show when not live */}
                     {!isLiveMode && (
                       <div className="mb-4">
@@ -400,12 +400,12 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                             max={playbackDuration || 1}
                             step={0.1}
                             onValueChange={handleSeek}
-                            className="w-full [&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:border-2"
+                            className="w-full [&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:border-2 [&_[role=slider]]:border-[hsl(190,100%,50%)] [&_[role=slider]]:bg-[hsl(190,100%,50%)]"
                           />
                         </div>
-                        <div className="flex justify-between mt-2 text-xs text-zinc-400 font-mono">
-                          <span className="bg-zinc-800 px-2 py-0.5 rounded">{formatDuration(playbackTime)}</span>
-                          <span className="bg-zinc-800 px-2 py-0.5 rounded">{formatDuration(playbackDuration)}</span>
+                        <div className="flex justify-between mt-2 text-xs text-[hsl(220,15%,50%)] font-mono">
+                          <span className="bg-[hsl(240,15%,10%)] px-2 py-0.5 rounded border border-[hsl(220,15%,18%)]">{formatDuration(playbackTime)}</span>
+                          <span className="bg-[hsl(240,15%,10%)] px-2 py-0.5 rounded border border-[hsl(220,15%,18%)]">{formatDuration(playbackDuration)}</span>
                         </div>
                       </div>
                     )}
@@ -416,7 +416,7 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                         size="sm"
                         onClick={() => skipBack(10)}
                         disabled={!remoteStream || bufferSeconds < 2}
-                        className="border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                        className="border-[hsl(220,15%,18%)] bg-[hsl(240,15%,10%)] hover:bg-[hsl(240,15%,15%)] text-[hsl(220,15%,70%)] hover:text-white"
                       >
                         <SkipBack className="h-4 w-4 mr-1" />
                         10s
@@ -428,7 +428,7 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                           size="sm"
                           onClick={pauseStream}
                           disabled={!remoteStream}
-                          className="border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-20"
+                          className="border-[hsl(220,15%,18%)] bg-[hsl(240,15%,10%)] hover:bg-[hsl(240,15%,15%)] text-[hsl(220,15%,70%)] hover:text-white w-20"
                         >
                           <Pause className="h-4 w-4 mr-1" />
                           Pause
@@ -438,7 +438,7 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                           variant="outline"
                           size="sm"
                           onClick={playStream}
-                          className="border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-20"
+                          className="border-[hsl(220,15%,18%)] bg-[hsl(240,15%,10%)] hover:bg-[hsl(240,15%,15%)] text-[hsl(220,15%,70%)] hover:text-white w-20"
                         >
                           <Play className="h-4 w-4 mr-1" />
                           Play
@@ -450,7 +450,7 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                         size="sm"
                         onClick={() => skipForward(10)}
                         disabled={isLiveMode}
-                        className="border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                        className="border-[hsl(220,15%,18%)] bg-[hsl(240,15%,10%)] hover:bg-[hsl(240,15%,15%)] text-[hsl(220,15%,70%)] hover:text-white"
                       >
                         10s
                         <SkipForward className="h-4 w-4 ml-1" />
@@ -462,8 +462,8 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                         onClick={goLive}
                         disabled={isLiveMode}
                         className={isLiveMode 
-                          ? "bg-red-600 hover:bg-red-700 text-white" 
-                          : "border-red-500/50 text-red-400 hover:bg-red-600/20"
+                          ? "bg-[hsl(350,100%,50%)] hover:bg-[hsl(350,100%,55%)] text-white shadow-[0_0_15px_-3px_hsl(350,100%,55%)]" 
+                          : "border-[hsl(350,100%,55%)]/50 text-[hsl(350,100%,60%)] hover:bg-[hsl(350,100%,55%)]/20"
                         }
                       >
                         <Circle className="h-3 w-3 fill-current mr-1" />
@@ -477,65 +477,65 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
 
             {/* Metadata panel */}
             <div className="space-y-4">
-              <Card className="border-zinc-800 bg-zinc-900">
-                <CardHeader className="pb-3 bg-zinc-900">
-                  <CardTitle className="flex items-center gap-2 text-base text-white">
-                    <Radio className="h-4 w-4 text-red-500" />
+              <Card className="border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)]">
+                <CardHeader className="pb-3 bg-[hsl(240,15%,6%)]">
+                  <CardTitle className="flex items-center gap-2 text-base text-white font-bold tracking-tight">
+                    <Radio className="h-4 w-4 text-[hsl(350,100%,55%)]" />
                     Stream Details
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 bg-zinc-900">
+                <CardContent className="space-y-4 bg-[hsl(240,15%,6%)]">
                   <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    <p className="text-xs font-medium uppercase tracking-wider text-[hsl(220,15%,45%)]">
                       Stream ID
                     </p>
-                    <p className="font-mono text-sm text-zinc-300 break-all">{stream.id}</p>
+                    <p className="font-mono text-sm text-[hsl(220,15%,70%)] break-all">{stream.id}</p>
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    <p className="text-xs font-medium uppercase tracking-wider text-[hsl(220,15%,45%)]">
                       Started At
                     </p>
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-zinc-500" />
-                      <p className="text-sm text-zinc-300">{formatTimestamp(stream.startedAt)}</p>
+                      <Clock className="h-4 w-4 text-[hsl(220,15%,50%)]" />
+                      <p className="text-sm text-[hsl(220,15%,70%)] font-mono">{formatTimestamp(stream.startedAt)}</p>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    <p className="text-xs font-medium uppercase tracking-wider text-[hsl(220,15%,45%)]">
                       Duration
                     </p>
-                    <p className="font-mono text-lg font-bold text-red-500">
+                    <p className="font-mono text-lg font-bold text-[hsl(350,100%,55%)]">
                       {formatDuration(duration)}
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-zinc-800 bg-zinc-900">
-                <CardHeader className="pb-3 bg-zinc-900">
-                  <CardTitle className="flex items-center gap-2 text-base text-white">
-                    <MapPin className="h-4 w-4 text-blue-500" />
+              <Card className="border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)]">
+                <CardHeader className="pb-3 bg-[hsl(240,15%,6%)]">
+                  <CardTitle className="flex items-center gap-2 text-base text-white font-bold tracking-tight">
+                    <MapPin className="h-4 w-4 text-[hsl(190,100%,50%)]" />
                     Location
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 bg-zinc-900">
+                <CardContent className="space-y-3 bg-[hsl(240,15%,6%)]">
                   {/* Always show coordinates in separate boxes */}
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-lg bg-zinc-800 border border-zinc-700 p-2">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 mb-1">
+                    <div className="rounded-lg bg-[hsl(240,15%,10%)] border border-[hsl(220,15%,18%)] p-2">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-[hsl(220,15%,45%)] mb-1">
                         Latitude
                       </p>
-                      <p className="font-mono text-sm text-zinc-300">
+                      <p className="font-mono text-sm text-[hsl(220,15%,70%)]">
                         {stream.latitude.toFixed(6)}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-zinc-800 border border-zinc-700 p-2">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 mb-1">
+                    <div className="rounded-lg bg-[hsl(240,15%,10%)] border border-[hsl(220,15%,18%)] p-2">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-[hsl(220,15%,45%)] mb-1">
                         Longitude
                       </p>
-                      <p className="font-mono text-sm text-zinc-300">
+                      <p className="font-mono text-sm text-[hsl(220,15%,70%)]">
                         {stream.longitude.toFixed(6)}
                       </p>
                     </div>
@@ -548,11 +548,20 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                       rel="noopener noreferrer"
                       className="block"
                     >
-                      <div className="aspect-video rounded-lg overflow-hidden border border-zinc-700 relative group">
+                      <div className="aspect-video rounded-lg overflow-hidden border border-[hsl(220,15%,18%)] relative group">
                         <img
-                          src={`https://static-maps.yandex.ru/1.x/?ll=${stream.longitude},${stream.latitude}&z=15&l=map&size=400,300&pt=${stream.longitude},${stream.latitude},pm2rdl`}
+                          src={`https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s-l+f00(${stream.longitude},${stream.latitude})/${stream.longitude},${stream.latitude},15,0/400x300@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw`}
                           alt="Location map"
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback to OpenStreetMap tiles if Mapbox fails
+                            const target = e.target as HTMLImageElement;
+                            const zoom = 15;
+                            const scale = Math.pow(2, zoom);
+                            const x = Math.floor((stream.longitude + 180) / 360 * scale);
+                            const y = Math.floor((1 - Math.log(Math.tan(stream.latitude * Math.PI / 180) + 1 / Math.cos(stream.latitude * Math.PI / 180)) / Math.PI) / 2 * scale);
+                            target.src = `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+                          }}
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                           <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
@@ -562,10 +571,10 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
                       </div>
                     </a>
                   ) : (
-                    <div className="aspect-video rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                    <div className="aspect-video rounded-lg bg-[hsl(240,15%,10%)] border border-[hsl(220,15%,18%)] flex items-center justify-center">
                       <div className="text-center">
-                        <MapPin className="mx-auto h-8 w-8 text-zinc-600" />
-                        <p className="mt-2 text-xs text-zinc-500">Acquiring location...</p>
+                        <MapPin className="mx-auto h-8 w-8 text-[hsl(220,15%,30%)]" />
+                        <p className="mt-2 text-xs text-[hsl(220,15%,45%)]">Acquiring location...</p>
                       </div>
                     </div>
                   )}
@@ -573,16 +582,16 @@ export function ExpandedStreamView({ stream, duration, onClose }: ExpandedStream
               </Card>
 
               {stream.notes && stream.notes.trim() !== "" && (
-                <Card className="border-zinc-800 bg-zinc-900">
-                  <CardHeader className="pb-3 bg-zinc-900">
-                    <CardTitle className="flex items-center gap-2 text-base text-white">
-                      <FileText className="h-4 w-4 text-amber-500" />
+                <Card className="border-[hsl(220,15%,12%)] bg-[hsl(240,15%,6%)]">
+                  <CardHeader className="pb-3 bg-[hsl(240,15%,6%)]">
+                    <CardTitle className="flex items-center gap-2 text-base text-white font-bold tracking-tight">
+                      <FileText className="h-4 w-4 text-[hsl(35,100%,55%)]" />
                       Additional Context
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="bg-zinc-900">
-                    <div className="rounded-lg bg-amber-600/10 border border-amber-500/30 p-3">
-                      <p className="text-sm leading-relaxed text-zinc-300">{stream.notes}</p>
+                  <CardContent className="bg-[hsl(240,15%,6%)]">
+                    <div className="rounded-lg bg-[hsl(35,100%,55%)]/10 border border-[hsl(35,100%,55%)]/30 p-3">
+                      <p className="text-sm leading-relaxed text-[hsl(220,15%,70%)]">{stream.notes}</p>
                     </div>
                   </CardContent>
                 </Card>
