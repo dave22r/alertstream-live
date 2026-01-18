@@ -251,7 +251,7 @@ async def analyze_with_openrouter(image_data: bytes, content_type: str) -> str:
                         "content": [
                             {
                                 "type": "text",
-                                "text": "Analyze this image. List ALL that are visible: 1) GUN - NERF toy blaster (teal/slate blue body, orange NERF logo, TRIO ELITE 2.0, three orange barrels), 2) PHONE - mobile phone/smartphone, 3) SUSPECT - CRITICAL: Person MUST be wearing a GREY colored hoodie/jacket. If clothing is NOT grey (black, blue, white, any other color) then DO NOT mark as SUSPECT. Also requires transparent/clear rectangular glasses. Do NOT classify anyone as SUSPECT unless their hoodie/jacket is clearly GREY colored. Reply with comma-separated list (e.g. 'GUN,SUSPECT' or 'PHONE' or 'NONE' if nothing detected)."
+                                "text": "Analyze this image. List ALL that are visible: 1) GUN - NERF toy blaster (teal/slate blue body, orange NERF logo, TRIO ELITE 2.0, three orange barrels), 2) SUSPECT - CRITICAL: Person MUST be wearing a GREY colored hoodie/jacket. If clothing is NOT grey (black, blue, white, any other color) then DO NOT mark as SUSPECT. Also requires transparent/clear rectangular glasses. Do NOT classify anyone as SUSPECT unless their hoodie/jacket is clearly GREY colored. Reply with comma-separated list (e.g. 'GUN,SUSPECT' or 'GUN' or 'NONE' if nothing detected)."
                             },
                             {
                                 "type": "image_url",
@@ -302,7 +302,7 @@ async def analyze_frame(
                     model='gemini-2.0-flash-exp',
                     contents={
                         'parts': [
-                            {'text': 'Analyze this image. List ALL that are visible: 1) GUN - NERF toy blaster (teal/slate blue body, orange NERF logo, TRIO ELITE 2.0, three orange barrels), 2) PHONE - mobile phone/smartphone, 3) SUSPECT - CRITICAL: Person MUST be wearing a GREY colored hoodie/jacket. If clothing is NOT grey (black, blue, white, any other color) then DO NOT mark as SUSPECT. Also requires transparent/clear rectangular glasses. Do NOT classify anyone as SUSPECT unless their hoodie/jacket is clearly GREY colored. Reply with comma-separated list (e.g. GUN,SUSPECT or PHONE or NONE if nothing detected).'},
+                            {'text': 'Analyze this image. List ALL that are visible: 1) GUN - NERF toy blaster (teal/slate blue body, orange NERF logo, TRIO ELITE 2.0, three orange barrels), 2) SUSPECT - CRITICAL: Person MUST be wearing a GREY colored hoodie/jacket. If clothing is NOT grey (black, blue, white, any other color) then DO NOT mark as SUSPECT. Also requires transparent/clear rectangular glasses. Do NOT classify anyone as SUSPECT unless their hoodie/jacket is clearly GREY colored. Reply with comma-separated list (e.g. GUN,SUSPECT or GUN or NONE if nothing detected).'},
                             {
                                 'inline_data': {
                                     'mime_type': frame.content_type or 'image/jpeg',
@@ -328,9 +328,8 @@ async def analyze_frame(
         
         # Determine what was detected (can be multiple)
         gun_detected = "GUN" in answer
-        phone_detected = "PHONE" in answer
         suspect_detected = "SUSPECT" in answer
-        threat_detected = gun_detected or phone_detected or suspect_detected
+        threat_detected = gun_detected or suspect_detected
         
         # Build list of detected items
         detections = []
@@ -341,14 +340,11 @@ async def analyze_frame(
         if gun_detected:
             detections.append("NERF Toy Blaster Detected")
             detection_types.append("gun")
-        if phone_detected:
-            detections.append("Mobile Phone Detected")
-            detection_types.append("phone")
         
         # Combined alert message
         alert_message = " + ".join(detections) if detections else None
         
-        print(f"[AI Sentry] Detection result: gun={gun_detected}, phone={phone_detected}, suspect={suspect_detected}")
+        print(f"[AI Sentry] Detection result: gun={gun_detected}, suspect={suspect_detected}")
         
         if threat_detected and alert_message:
             # Send alert to all dashboards
