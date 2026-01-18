@@ -57,12 +57,6 @@ export default function Index() {
                   Start Emergency Stream
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" asChild className="h-12 px-6 border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 gap-2">
-                <Link to="/police">
-                  View Police Dashboard
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
             </div>
           </div>
         </div>
