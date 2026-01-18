@@ -43,6 +43,7 @@ import { PastStreamViewer } from "@/components/PastStreamViewer";
 import { StreamMapView } from "@/components/StreamMapView";
 import { useDashboard, type StreamInfo, type PastStreamInfo } from "@/hooks/useDashboard";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 // Convert server stream info to StreamData format
 function serverToStreamData(info: StreamInfo): StreamData {
@@ -92,7 +93,29 @@ export default function PoliceDashboard() {
   const [filterRadius, setFilterRadius] = useState(10); // km
 
   // Connect to signaling server
-  const { streams: serverStreams, pastStreams, isConnected, deletePastStream } = useDashboard();
+  const {
+    streams: serverStreams,
+    pastStreams,
+    isConnected,
+    deletePastStream,
+    lastAlert,
+    clearAlert
+  } = useDashboard();
+
+  // Toast for AI Sentry alerts (persistent - must click to dismiss)
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (lastAlert) {
+      toast({
+        variant: "destructive",
+        title: `🚨 ${lastAlert.message}`,
+        description: `Stream: ${lastAlert.stream_id.substring(0, 8)} | Location: ${lastAlert.latitude.toFixed(4)}, ${lastAlert.longitude.toFixed(4)}`,
+        duration: Infinity, // Never auto-dismiss
+      });
+      clearAlert();
+    }
+  }, [lastAlert, toast, clearAlert]);
 
   const handleLogout = () => {
     logout();

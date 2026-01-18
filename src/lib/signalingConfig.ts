@@ -1,4 +1,4 @@
-const SIGNALING_SERVER = import.meta.env.VITE_SIGNALING_SERVER || "ws://localhost:8000";
+const SIGNALING_SERVER = import.meta.env.VITE_SIGNALING_SERVER || "ws://localhost:8080";
 const HTTP_BASE = SIGNALING_SERVER.replace("ws://", "http://").replace("wss://", "https://");
 
 export const signalingConfig = {
@@ -9,6 +9,7 @@ export const signalingConfig = {
   uploadUrl: `${HTTP_BASE}/upload-recording`,
   pastStreamsUrl: `${HTTP_BASE}/past-streams`,
   recordingsBaseUrl: `${HTTP_BASE}/recordings`,
+  analyzeFrameUrl: `${HTTP_BASE}/analyze-frame`,
 };
 
 export const rtcConfig: RTCConfiguration = {
